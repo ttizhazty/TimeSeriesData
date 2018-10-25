@@ -20,32 +20,85 @@ class TimeSeriesData:
 
     def encodeData(self, line):
         line = line.strip('\n').split(',')
-        encoded_data = []
-        '''
-        if line[1] != '--':
+        encoded_data = [0] * 88
+        if line[1] == '--':
+            return encoded_data
+        else:
             # Encode the gear level into number
-            if line[5] = 'Neutral':
+            if line[5] == 'Neutral':
                encoded_data[5] = 0
             else:
                 encoded_data[5] = line[5][0]
             # Encode the Clutch Pedal Depressed into number:
-        '''
-        if line[1] != '--':
-            for data in line:
-                try:
-                    data = float(data) 
-                except ValueError:
-                    continue
-                encoded_data.append(data)
+            if line[7] == 'Clutch Pedal Depressed (踏んだ)':
+                encoded_data[7] = 1
+            else:
+                encoded_data[7] = 0
+
+            if line[8] == 'ブレーキペダル踏んだ':
+                encoded_data[8] = 1
+            else:
+                encoded_data[8] = 0
+            
+            if line[9] == 'OFF(クルーズ制御終了もしくは不可)':
+                encoded_data[9] = 0
+            else:
+                encoded_data[9] = 1
+            
+            try:
+                int(line[20][-1])
+                encoded_data[20] = int(line[20][-1]) 
+            except ValueError:
+                encoded_data[20] = 0
+
+
+            if line[25] == 'ITHモーター過電流防止Duty制限なし':
+                encoded_data[25] = 0
+            else:
+                encoded_data[25] = 1
+
+            if line[26] == 'EGRモーター過電流防止Duty制限なし':
+                encoded_data[26] = 0
+            else:
+                encoded_data[26] = 1
+            
+            if line[27] == 'EGRモーター2過電流防止Duty制限なし':
+                encoded_data[27] = 0
+            else:
+                encoded_data[27] = 1 
+
+            if line[56][-3:] == 'OFF':
+                encoded_data[56] = 0
+            else:
+                encoded_data[56] = 1
+            
+            if line[57][-3:] == 'OFF':
+                encoded_data[57] = 0
+            else:
+                encoded_data[57] = 1 
+
+            if line[58][-3:] == 'OFF':
+                encoded_data[58] = 0
+            else:
+                encoded_data[58] = 1
+            
+            if line[59] == 'ON':
+                encoded_data[59] = 1
+            else:
+                encoded_data[59] = 0
+
+            for i in range(len(encoded_data)):
+                if encoded_data[i] == 0:
+                    encoded_data[i] = float(line[i+1])
             return encoded_data
-        else:
-            return [0] * 76
 
     def loadData(self):
         #output_file_path = self.unzip_file_path[:-3] + '.pkl'
         with open(self.unzip_file_path[:-3] + '.csv', 'r', encoding = 'Shift-JIS') as fr:
             cnt = 0
             for line in tqdm(fr):
+                if cnt == 0:
+                    continue
                 if cnt > 10000:
                     break
                 cnt += 1
