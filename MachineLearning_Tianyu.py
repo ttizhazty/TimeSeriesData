@@ -31,19 +31,22 @@ def laodTrainingSample(filepath):
         return train_X, train_Y
 
 def loadData(dir):
-    file_list = listdir(dir)[1:]
+    file_list = listdir(dir)
     np.random.shuffle(file_list)
     #train_X_all = np.zeros([len(file_list), 14520, correct_l])
     #train_Y_all = np.zeros([len(file_list), 14520, problem_l])
-    train_X_all = np.zeros([50, 14520, correct_l])
-    train_Y_all = np.zeros([50, 14520, problem_l])
+    train_X_all = np.zeros([200, 14520, correct_l])
+    train_Y_all = np.zeros([200, 14520, problem_l])
     #for i in range(1,len(file_list) - 1):
-    for i in range(50):
+    for i in range(200):
         file_path = dir + file_list[i]
-        train_X_sample, train_Y_sample = laodTrainingSample(file_path)
-        train_X_all[i,:,:] = train_X_sample 
-        train_Y_all[i,:,:] = train_Y_sample
-    train_X, test_X, train_Y, test_Y = train_test_split(train_X_all, train_Y_all, test_size = 0.02, random_state=1)
+        try:
+            train_X_sample, train_Y_sample = laodTrainingSample(file_path)
+            train_X_all[i,:,:] = train_X_sample 
+            train_Y_all[i,:,:] = train_Y_sample
+        except Exception:
+            continue
+    train_X, test_X, train_Y, test_Y = train_test_split(train_X_all, train_Y_all, test_size = 0.01, random_state=1)
     print('training data size is: ', train_X.shape)
     print('testing data size is: ', test_Y.shape)
     return train_X, test_X, train_Y, test_Y 
