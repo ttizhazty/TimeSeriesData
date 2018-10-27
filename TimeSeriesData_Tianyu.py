@@ -17,106 +17,132 @@ class TimeSeriesData:
 
     def unzipFile(self):
         os.system('7z x' + ' ' + self.input_file_path + ' -o' +  self.unzip_file_dir_path)
+        print('All the files are unzipped......')
 
     def encodeData(self, line):
         line = line.strip('\n').split(',')
+        line = line[1:]
         encoded_data = [0] * 88
-        if line[1] == '--':
-            return encoded_data
-        else:
+        if line[0] != '--':
+            idx = [0] * 88
             # Encode the gear level into number
-            if line[5] == 'Neutral':
-               encoded_data[5] = 0
+            if line[4] == 'Neutral':
+               encoded_data[4] = 0
+            elif line[4][0] == '1':
+                encoded_data[4] = 1
+            elif line[4][0] == '2':
+                encoded_data[4] = 2
+            elif line[4][0] == '3':
+                encoded_data[4] = 3
+            elif line[4][0] == '4':
+                encoded_data[4] = 4
+            elif line[4][0] == '5':
+                encoded_data[4] = 5
             else:
-                encoded_data[5] = line[5][0]
-            # Encode the Clutch Pedal Depressed into number:
-            if line[7] == 'Clutch Pedal Depressed (踏んだ)':
+                encoded_data[4] = 0
+            idx[4] = 1
+
+            # Encode the Clutch Pedal Depressed into number
+            if line[6] == 'Clutch Pedal Depressed (踏んだ)':
+                encoded_data[6] = 1
+            else:
+                encoded_data[6] = 0
+            idx[6] = 1
+
+            if line[7] == 'ブレーキペダル踏んだ':
                 encoded_data[7] = 1
             else:
                 encoded_data[7] = 0
+            idx[7] = 1
 
-            if line[8] == 'ブレーキペダル踏んだ':
-                encoded_data[8] = 1
-            else:
+            if line[8] == 'OFF(クルーズ制御終了もしくは不可)':
                 encoded_data[8] = 0
-            
-            if line[9] == 'OFF(クルーズ制御終了もしくは不可)':
-                encoded_data[9] = 0
             else:
-                encoded_data[9] = 1
-            
-            try:
-                int(line[20][-1])
-                encoded_data[20] = int(line[20][-1]) 
-            except ValueError:
-                encoded_data[20] = 0
+                encoded_data[8] = 1
+            idx[8] = 1
 
+            if line[19] == 'DPFステータス0':
+                encoded_data[19] = 1
+            else:
+                encoded_data[19] = 0
+            idx[19] = 1
 
-            if line[25] == 'ITHモーター過電流防止Duty制限なし':
+            if line[24] == 'ITHモーター過電流防止Duty制限なし':
+                encoded_data[24] = 0
+            else:
+                encoded_data[24] = 1
+            idx[24] = 1
+
+            if line[25] == 'EGRモーター過電流防止Duty制限なし':
                 encoded_data[25] = 0
             else:
                 encoded_data[25] = 1
+            idx[25] = 1
 
-            if line[26] == 'EGRモーター過電流防止Duty制限なし':
+            if line[26] == 'EGRモーター2過電流防止Duty制限なし':
                 encoded_data[26] = 0
             else:
-                encoded_data[26] = 1
-            
-            if line[27] == 'EGRモーター2過電流防止Duty制限なし':
-                encoded_data[27] = 0
-            else:
-                encoded_data[27] = 1 
+                encoded_data[26] = 1 
+            idx[26] = 1
 
-            if line[56][-3:] == 'OFF':
+            if line[55] == 'M/V OFF':
+                encoded_data[55] = 0
+            else:
+                encoded_data[55] = 1
+            idx[55] = 1
+
+            if line[56] == 'M/V OFF':
                 encoded_data[56] = 0
             else:
-                encoded_data[56] = 1
-            
-            if line[57][-3:] == 'OFF':
+                encoded_data[56] = 1 
+            idx[56] = 1
+
+            if line[57] == 'M/V OFF':
                 encoded_data[57] = 0
             else:
-                encoded_data[57] = 1 
+                encoded_data[57] = 1
+            idx[57] = 1
 
-            if line[58][-3:] == 'OFF':
-                encoded_data[58] = 0
-            else:
+            if line[58] == 'ON':
                 encoded_data[58] = 1
-            
-            if line[59] == 'ON':
-                encoded_data[59] = 1
             else:
-                encoded_data[59] = 0
+                encoded_data[58] = 0
+            idx[58] = 1
 
-            for i in range(len(encoded_data)):
-                if encoded_data[i] == 0:
-                    encoded_data[i] = float(line[i+1])
+            for i in range(len(idx)):
+                if idx[i] == 0:
+                    encoded_data[i] = float(line[i])
+            return encoded_data
+        else:
             return encoded_data
 
     def loadData(self):
-        #output_file_path = self.unzip_file_path[:-3] + '.pkl'
+        print(self.unzip_file_path[:-3] + '.csv')
         with open(self.unzip_file_path[:-3] + '.csv', 'r', encoding = 'Shift-JIS') as fr:
             cnt = 0
             for line in tqdm(fr):
                 if cnt == 0:
-                    continue
-                if cnt > 10000:
+                    print(line.split(','))
+                if cnt > 100000:
                     break
                 cnt += 1
-                encoded_sample = self.encodeData(line)
+                try:
+                    encoded_sample = self.encodeData(line)
+                except ValueError:
+                    continue
                 self.time_series_data.append(encoded_sample)
-            #pickle.dump(time_series_data, open(output_file_path, 'wb'))
 
-    def dataSegement_by_1_Hour(self):             # one hour collecter 121 * 5 = 605(sample size) 
-        #print('I am in a segement function-----------------')
-        #print(len(self.time_series_data))
-        for i in tqdm(range(0, len(self.time_series_data) // 121 - 3, 3)):    # the setp size of the silding window
-            output_file_path = self.unzip_file_path[:-3] +'_%d_ hour' %i + '.pkl'
-            #print('I am wirtting hourly file --------------------------------------')
-            start = i
-            end = i + 605
+    def dataSegement_by_1_Hour(self):             # one hour collecter 121 * 5 = 605(sample size)  
+        start = 0 
+        end = 14520
+        print(len(self.time_series_data))
+        for i in tqdm(range(len(self.time_series_data) // 14520)):    # the setp size of the silding window
+            output_file_path = self.unzip_file_path[:-3] +'_%d_ day' %i + '.pkl'
             one_hour_sample = np.array(self.time_series_data[start:end])
             pickle.dump(one_hour_sample, open(output_file_path, 'wb'))
-    
+            start += 14520
+            end += 14520
+
     def dataSegement_by_2_Hour(self):
         #TODO: later make more wide slice
         pass
@@ -127,7 +153,7 @@ if __name__ == '__main__':
     zip_files = listdir(input_file_dir_path)
     cnt = 0
     for files in zip_files:
-        if cnt > 2:
+        if cnt > 0:
             break
         cnt += 1 
         input_file_path = input_file_dir_path + files
@@ -137,7 +163,7 @@ if __name__ == '__main__':
         try:
             time_series_data.loadData()
             time_series_data.dataSegement_by_1_Hour()
-            os.system('rm ' + unzip_file_path[:-3]+ '.csv')
+            #os.system('rm ' + unzip_file_path[:-3]+ '.csv')
         except FileNotFoundError:
             continue
 
