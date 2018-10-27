@@ -123,7 +123,7 @@ class TimeSeriesData:
             for line in tqdm(fr):
                 if cnt == 0:
                     print(line.split(','))
-                if cnt > 100000:
+                if cnt > 10000000:
                     break
                 cnt += 1
                 try:
@@ -151,11 +151,8 @@ if __name__ == '__main__':
     input_file_dir_path = '/Users/tianyuzhang/Desktop/Intern/intern/ISUZU/OBD_tianyu/New_injector_failure_data/'
     unzip_file_dir_path = '/Users/tianyuzhang/Desktop/Intern/intern/ISUZU/OBD_tianyu/New_injector_failure_data/unzip/'
     zip_files = listdir(input_file_dir_path)
-    cnt = 0
+
     for files in zip_files:
-        if cnt > 0:
-            break
-        cnt += 1 
         input_file_path = input_file_dir_path + files
         unzip_file_path = unzip_file_dir_path + files
         time_series_data = TimeSeriesData(input_file_path, unzip_file_dir_path, unzip_file_path)
