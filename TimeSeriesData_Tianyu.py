@@ -1,166 +1,115 @@
 import pickle
 import numpy as np
 from tqdm import tqdm
+import time
 import os
 from os import listdir
 from os.path import isfile, join
+from sklearn import datasets, linear_model
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVR
+import xgboost as xgb
+from matplotlib import pyplot as plt
+from seq2seq_v1 import Seq2seqModel
 import pdb
 
-# sample data: ['2017/03/07 07:15:34.50', '0', '16', '561.125', '26.234375', '1st Gear', '3.28125', 'Clutch Pedal Depressed (踏んだ)', 'ブレーキペダル踏んだ', 'OFF(クルーズ制御終了もしくは不可)', '88', '48', '0', '31', '0', '99.5', '16', '4', '270', '290', 'DPFステータス0', '0', '0', '2', '0', 'ITHモーター過電流防止Duty制限なし', 'EGRモーター過電流防止Duty制限なし', 'EGRモーター2過電流防止Duty制限なし', '30', '0.882', '18', '41.5', '38', '-4', '55', '59.5', '28', '35', '1012', '1002.5', '1510', '29', '92.4', '92', '298', '3', '-12', '0', '16', '0.75', '-0.75', '-0.5', '1', '0', '0', '575', 'M/V OFF', 'M/V OFF', 'M/V OFF', 'ON', '0', '0', '493.3', '101', '255', '65535', '65535', '255', '0', '13', '0', '-3', '0', '13', '0', '0', '-0.07275390625', '8', '0', '0', '0', '0', '-1', '-9', '215', '215', '255', '25.5', '0']
-class TimeSeriesData:
-    def __init__(self, input_file_path, unzip_file_dir_path, unzip_file_path):
-        self.input_file_path = input_file_path
-        self.unzip_file_dir_path = unzip_file_dir_path
-        self.unzip_file_path = unzip_file_path
-        
-        self.time_series_data = []
+sensor_dict = {}
+sensor_list = ['1.[Accelerator pedal opening degree](%)', '2.[Actual Engine Torque](%)', '3.[Engine Speed](rpm)', '4.[Target fuel injection amount](mm3/st)', '5.[Current Gear]', '6.[Vehicle speed (25 pulses)](km/h)', '7.[CluchSW](MT only)', '8.[Brake SW]', '9.[Cruise Control Status]', '10.[coolant temperature](℃)', '11.[fuel temperature](℃)', '12.[Post injection Q](mm3)', '13.[Common rail pressure](MPa)', '14.[DPF differential pressure](kPa)', '15.[Atmospheric pressure](kPa)', '16.[Intake air temperature](℃)', '17.[Boost pressure](kPa)', '18.[CSF inlet temperature](℃)', '19.[DOC inlet temperature](℃)', '20.[DPF Status]', '21.[DPF error count]', '22.[DPF warning count]', '23.[DPF PM accumulation status]', '24.[DPF mileage status]', '25.[ITH Motor Protect Duty Limit Status]', '26.[EGR Motor Protect Duty Limit Status]', '27.[EGR Motor2 Protect Duty Limit Status]', '28.[DPF mode]', '29.[MAF](g/cyl)', '30.[EGR Duty](%)', '31.[EGR Target Position](%)','32.[EGR Actual Position](%)', '33.[Intake Throttle Duty](%)', '34.[Intake Throttle Target Position](%)', '35.[Intake Throttle Actual Position](%)', '36.[IGN Voltage](V)', '37.[RPCV Duty(medium small)・PCV Close Timing(large)](%・CA)', '38.[RPCV Actual Current(medium small)・PCV F/B Control Quantity(large)](mA・CA)', '39.[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)', '40.[RPCV Commanded Fuel Flow(medium small)・EGR BLDC 2 Duty](mm3/sec・%)', '41.[Target Rail Pressure](Mpa)', '42.[VNT actual Position](%)', '43.[VNT Target Position](%)', '44.[Target Boost](%)', '45.[Engine Mode]', '46.[Mail SOI](CA)', '47.[Pilot SOI](CA)', '48.[CAM CRANK Synchro Status]', '49.[Cylinder1 Balancing Fuel Compensation](mm3/st)', '50.[Cylinder2 Balancing Fuel Compensation](mm3/st)', '51.[Cylinder3 Balancing Fuel Compensation](mm3/st)', '52.[Cylinder4 Balancing Fuel Compensation](mm3/st)', '53.[Cylinder5 Balancing Fuel Compensation](mm3/st)', '54.[Cylinder6 Balancing Fuel Compensation](mm3/st)', '55.[Target Idle rpm](rpm)', '56.[VGS Magnetic Valve Drive Status 1]', '57.[VGS Magnetic Valve Drive Status 2]', '58.[VGS Magnetic Valve Drive Status 3]', '59.[EGR cooler bypas valve]', '60.[Exhaust pipe INJ ON / OFF state](%)', '61.[Injection amount of exhaust pipe INJ](mm3/st)', '62.[Exhaust pipe INJ fuel pressure](kPa)', '63.[Compressor outlet temperature](℃)', '64.[Rail pressure reducing valve drive duty](%)', '65.[Rail pressure reducing valve target current](mA)', '66.[Rail pressure reducing valve actual current](mA)', '67.[Rail pressure reducing valve target pressure](MPa)', '68.[Turbo EVRV Duty output](%)', '69.[egr_bldc_pid_base_dc_1]', '70.[egr_bldc_pid_base_dc_2]', '71.[egr_bldc_p_term_fnl_1]', '72.[egr_bldc_p_term_fnl_2]', '73.[egr_bldc_i_term_fnl_1]', '74.[egr_bldc_i_term_fnl_2]', '75.[rpcv_dc_p_gain]', '76.[rpcv_dc_i_gain]', '77.[trb_trg_base_pos]', '78.[trb_map_fb_pos]', '79.[trb_map_p_term_fnl]', '80.[trb_map_i_term_fnl]', '81.[ith_dc_p_term]', '82.[ith_dc_i_term]', '83.[ith_dc_ff_fb]', '84.[CAC in sensor output]', '85.[CAC out sensor output]', '86.[Rail pressure sensor 2 output](MPa)', '87.[Sensor value O2](%)','88.[TBD]']
 
-    def unzipFile(self):
-        os.system('7z x' + ' ' + self.input_file_path + ' -o' +  self.unzip_file_dir_path)
-        print('All the files are unzipped......')
+for item in sensor_list:
+    sensor_number = int(item.split('.')[0])
+    senror_name = item.split('.')[1]
+    sensor_dict[sensor_number] = senror_name
+'''
+raw_correct_idx = [1,2,3,4,5,6,7,8,9,20,23,31,33,34,39,40,41,43,44,45,55,56,57,58,60,65,67,69,70,71,72,73,74,75,76,79,80,81,82,83,88]
+raw_problem_idx = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21,22,24,25,26,27,28,29,30,32,35,36,37,38,42,46,47,48,49,50,51,52,53,54,59,61,63,64,66,68,77,78,84,85,86,87]
+'''
+raw_correct_idx = [1,2,3,4,5,6,7,8,9,20,23,31,33,34,39,40,41,43,44,45,55,60,69,70,71,72,73,74,75,76,79,80,81,82,83,88]
+raw_problem_idx = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21,22,24,25,26,27,28,29,30,32,35,36,37,38,42,46,47,48,49,50,51,52,53,54,61,62,63,68,77,78]
+correct_idx = []
+problem_idx = []
+for idx in raw_correct_idx:
+    correct_idx.append(idx - 1)
+correct_l = len(correct_idx)
 
-    def encodeData(self, line):
-        line = line.strip('\n').split(',')
-        line = line[1:]
-        encoded_data = [0] * 88
-        if line[0] != '--':
-            idx = [0] * 88
-            # Encode the gear level into number
-            if line[4] == 'Neutral':
-               encoded_data[4] = 0
-            elif line[4][0] == '1':
-                encoded_data[4] = 1
-            elif line[4][0] == '2':
-                encoded_data[4] = 2
-            elif line[4][0] == '3':
-                encoded_data[4] = 3
-            elif line[4][0] == '4':
-                encoded_data[4] = 4
-            elif line[4][0] == '5':
-                encoded_data[4] = 5
-            else:
-                encoded_data[4] = 0
-            idx[4] = 1
+for idx in raw_problem_idx:
+    problem_idx.append(idx - 1) 
+problem_l = len(problem_idx)
 
-            # Encode the Clutch Pedal Depressed into number
-            if line[6] == 'Clutch Pedal Depressed (踏んだ)':
-                encoded_data[6] = 1
-            else:
-                encoded_data[6] = 0
-            idx[6] = 1
+def laodTrainingSample(filepath):
+    with open(filepath, 'rb') as f:
+        train_one_day = pickle.load(f)
+        train_X = train_one_day[:, correct_idx]
+        train_Y = train_one_day[:, problem_idx]
+        return train_X, train_Y
 
-            if line[7] == 'ブレーキペダル踏んだ':
-                encoded_data[7] = 1
-            else:
-                encoded_data[7] = 0
-            idx[7] = 1
+def dataDistributionAnalysis(train_X, train_Y):
+    print('begin to plot the data on the scale of time......')
+    for i in range(train_X.shape[1]):
+        senor_idx = raw_correct_idx[i]
+        sensor_name = sensor_dict[senor_idx]
+        plt.figure()
+        plt.plot(train_X[:, i])
+        plt.title(sensor_name + ' vs time')
+        plt.savefig('./res/plot_data/correct_sensor_%d.png' %i)
 
-            if line[8] == 'OFF(クルーズ制御終了もしくは不可)':
-                encoded_data[8] = 0
-            else:
-                encoded_data[8] = 1
-            idx[8] = 1
+    for i in range(train_Y.shape[1]):
+        senor_idx = raw_problem_idx[i]
+        sensor_name = sensor_dict[senor_idx]
+        plt.figure()
+        plt.plot(train_Y[:, i])
+        plt.title(sensor_name + ' vs time')
+        plt.savefig('./res/plot_data/probelm_sensor_%d.png' %i)
+    print('plot finished !!!')
 
-            if line[19] == 'DPFステータス0':
-                encoded_data[19] = 1
-            else:
-                encoded_data[19] = 0
-            idx[19] = 1
-
-            if line[24] == 'ITHモーター過電流防止Duty制限なし':
-                encoded_data[24] = 0
-            else:
-                encoded_data[24] = 1
-            idx[24] = 1
-
-            if line[25] == 'EGRモーター過電流防止Duty制限なし':
-                encoded_data[25] = 0
-            else:
-                encoded_data[25] = 1
-            idx[25] = 1
-
-            if line[26] == 'EGRモーター2過電流防止Duty制限なし':
-                encoded_data[26] = 0
-            else:
-                encoded_data[26] = 1 
-            idx[26] = 1
-
-            if line[55] == 'M/V OFF':
-                encoded_data[55] = 0
-            else:
-                encoded_data[55] = 1
-            idx[55] = 1
-
-            if line[56] == 'M/V OFF':
-                encoded_data[56] = 0
-            else:
-                encoded_data[56] = 1 
-            idx[56] = 1
-
-            if line[57] == 'M/V OFF':
-                encoded_data[57] = 0
-            else:
-                encoded_data[57] = 1
-            idx[57] = 1
-
-            if line[58] == 'ON':
-                encoded_data[58] = 1
-            else:
-                encoded_data[58] = 0
-            idx[58] = 1
-
-            for i in range(len(idx)):
-                if idx[i] == 0:
-                    encoded_data[i] = float(line[i])
-            return encoded_data
-        else:
-            return encoded_data
-
-    def loadData(self):
-        print(self.unzip_file_path[:-3] + '.csv')
-        with open(self.unzip_file_path[:-3] + '.csv', 'r', encoding = 'Shift-JIS') as fr:
-            cnt = 0
-            for line in tqdm(fr):
-                if cnt == 0:
-                    print(line.split(','))
-                if cnt > 10000000:
-                    break
-                cnt += 1
-                try:
-                    encoded_sample = self.encodeData(line)
-                except ValueError:
-                    continue
-                self.time_series_data.append(encoded_sample)
-
-    def dataSegement_by_1_Hour(self):             # one hour collecter 121 * 5 = 605(sample size)  
-        start = 0 
-        end = 14520
-        print(len(self.time_series_data))
-        for i in tqdm(range(len(self.time_series_data) // 14520)):    # the setp size of the silding window
-            output_file_path = self.unzip_file_path[:-3] +'_%d_ day' %i + '.pkl'
-            one_hour_sample = np.array(self.time_series_data[start:end])
-            pickle.dump(one_hour_sample, open(output_file_path, 'wb'))
-            start += 14520
-            end += 14520
-
-    def dataSegement_by_2_Hour(self):
-        #TODO: later make more wide slice
-        pass
-        
-if __name__ == '__main__':
-    input_file_dir_path = '/Users/tianyuzhang/Desktop/Intern/intern/ISUZU/OBD_tianyu/New_injector_failure_data/'
-    unzip_file_dir_path = '/Users/tianyuzhang/Desktop/Intern/intern/ISUZU/OBD_tianyu/New_injector_failure_data/unzip/'
-    zip_files = listdir(input_file_dir_path)
-
-    for files in zip_files:
-        input_file_path = input_file_dir_path + files
-        unzip_file_path = unzip_file_dir_path + files
-        time_series_data = TimeSeriesData(input_file_path, unzip_file_dir_path, unzip_file_path)
-        time_series_data.unzipFile()
+def loadData(dir):
+    file_list = listdir(dir)
+    np.random.shuffle(file_list)
+    #train_X_all = np.zeros([len(file_list), 14520, correct_l])
+    #train_Y_all = np.zeros([len(file_list), 14520, problem_l])
+    train_X_all = np.zeros([600, 14520, correct_l])
+    train_Y_all = np.zeros([600, 14520, problem_l])
+    #for i in range(1,len(file_list) - 1):
+    for i in range(96):
+        file_path = dir + file_list[i]
         try:
-            time_series_data.loadData()
-            time_series_data.dataSegement_by_1_Hour()
-            #os.system('rm ' + unzip_file_path[:-3]+ '.csv')
-        except FileNotFoundError:
+            train_X_sample, train_Y_sample = laodTrainingSample(file_path)
+            train_X_all[i,:,:] = train_X_sample 
+            train_Y_all[i,:,:] = train_Y_sample
+        except Exception:
             continue
+    
+    #comment out here to chcek the data distribution on the scale of time line.
+    train_X, test_X, train_Y, test_Y = train_test_split(train_X_all, train_Y_all, test_size = 0.2, random_state=7)
+    ''' 
+    train_X = train_X_all.reshape(96*14520, -1)
+    train_Y = train_Y_all.reshape(96*14520, -1)
+    print(train_X.shape)
+    print(train_Y.shape)
+    '''
+    print('training data size is: ', train_X.shape)
+    print('testing data size is: ', test_Y.shape)
+    return train_X, test_X, train_Y, test_Y 
+    '''
+    return train_X, train_Y
+    '''
+def loadData_seperate_day(dir):
+    file_list = listdir(dir)
+    train_X_all = np.zeros([len(file_list), 14520, correct_l])
+    train_Y_all = np.zeros([len(file_list), 14520, problem_l])
+    print(file_list)
+    for i in range(1,len(file_list) - 1):
+        file_path = dir + file_list[i]
+        train_X_sample, train_Y_sample = laodTrainingSample(file_path)
+        train_X_all[i,:,:] = train_X_sample 
+        train_Y_all[i,:,:] = train_Y_sample
+    train_X, test_X, train_Y, test_Y = train_test_split(train_X_all, train_Y_all, test_size = 0.1)
+    print(dir+file_list[-1])
+    test_X, test_Y = laodTrainingSample(dir+file_list[-1])
 
+    return train_X_all, test_X, train_Y_all, test_Y 
+
+if __name__ == '__main__':
+    input_dir = '/Users/tianyuzhang/Desktop/Intern/intern/ISUZU/OBD_tianyu/New_injector_failure_data/unzip/'
+    train_X, test_X, train_Y, test_Y = loadData(input_dir)
+    Seq2seqV1 = Seq2seqModel(encode_dim=36,decode_dim=40,input_seq_len=121,output_seq_len=121,rnn_size=40,layer_size=1,learning_rate=0.1,train_X=train_X,train_Y=train_Y,test_X=test_X,test_Y=test_Y,sensor2sensor=True,train_epoch=10)
