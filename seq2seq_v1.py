@@ -45,6 +45,7 @@ class Seq2seqModel(object):
         self.linear_out = self.input_seq
         for i in range(len(self.dnn_size)):
             self.linear_out = tf.add(tf.matmul(self.linear_out, self.weights['layer_%d_W' %i]), self.weights['layer_%d_b' %i])
+            self.linear_out = tf.nn.sigmoid(self.linear_out)
             if self.dropout:
                 self.linear_out = tf.nn.dropout(self.linear_out, self.dropout)
         self.pred = tf.matmul(self.linear_out, self.weights['prediction_W'])
