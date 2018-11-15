@@ -67,10 +67,10 @@ def loadData(dir):
     np.random.shuffle(file_list)
     #train_X_all = np.zeros([len(file_list), 14520, correct_l])
     #train_Y_all = np.zeros([len(file_list), 14520, problem_l])
-    train_X_all = np.zeros([600, 14520, correct_l])
-    train_Y_all = np.zeros([600, 14520, problem_l])
+    train_X_all = np.zeros([200, 14520, correct_l])
+    train_Y_all = np.zeros([200, 14520, problem_l])
     #for i in range(1,len(file_list) - 1):
-    for i in range(96):
+    for i in range(200):
         file_path = dir + file_list[i]
         try:
             train_X_sample, train_Y_sample = laodTrainingSample(file_path)
@@ -78,17 +78,21 @@ def loadData(dir):
             train_Y_all[i,:,:] = train_Y_sample
         except Exception:
             continue
-    
+    '''
     #comment out here to chcek the data distribution on the scale of time line.
     train_X, test_X, train_Y, test_Y = train_test_split(train_X_all, train_Y_all, test_size = 0.2, random_state=7)
     ''' 
-    train_X = train_X_all.reshape(96*14520, -1)
-    train_Y = train_Y_all.reshape(96*14520, -1)
-    print(train_X.shape)
-    print(train_Y.shape)
-    '''
+    train_X = train_X_all.reshape(200*14520, -1)
+    train_Y = train_Y_all.reshape(200*14520, -1)
+    #print(train_X.shape)
+    #print(train_Y.shape)
     print('training data size is: ', train_X.shape)
-    print('testing data size is: ', test_Y.shape)
+    print('train label size is: ', train_Y.shape)
+    train_X, test_X, train_Y, test_Y = train_test_split(train_X_all, train_Y_all, test_size = 0.2, random_state=7) 
+    train_X = train_X.reshape(160, 14520,-1)
+    train_Y = train_Y.reshape(160,14520,-1)
+    test_X = test_X.reshape(40,14520,-1)
+    test_Y = test_Y.reshape(40,14520,-1)
     return train_X, test_X, train_Y, test_Y 
     '''
     return train_X, train_Y
@@ -106,10 +110,9 @@ def loadData_seperate_day(dir):
     train_X, test_X, train_Y, test_Y = train_test_split(train_X_all, train_Y_all, test_size = 0.1)
     print(dir+file_list[-1])
     test_X, test_Y = laodTrainingSample(dir+file_list[-1])
-
-    return train_X_all, test_X, train_Y_all, test_Y 
+    return train_X_all, test_X, train_Y_all, test_Y
 
 if __name__ == '__main__':
     input_dir = '/Users/tianyuzhang/Desktop/Intern/intern/ISUZU/OBD_tianyu/New_injector_failure_data/unzip/'
     train_X, test_X, train_Y, test_Y = loadData(input_dir)
-    Seq2seqV1 = Seq2seqModel(encode_dim=36,decode_dim=40,input_seq_len=121,output_seq_len=121,rnn_size=40,layer_size=1,learning_rate=0.1,train_X=train_X,train_Y=train_Y,test_X=test_X,test_Y=test_Y,sensor2sensor=True,train_epoch=10)
+    Seq2seqV1 = Seq2seqModel(encode_dim=36,decode_dim=40,input_seq_len=121,output_seq_len=121,rnn_size=40,layer_size=3,dnn_size = [64,128,256,128,64],learning_rate=0.001,dropout=0.7,reg_lambda=0.5,train_X=train_X,train_Y=train_Y,test_X=test_X,test_Y=test_Y,sensor2sensor=True,train_epoch=50)

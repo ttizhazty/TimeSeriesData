@@ -8,6 +8,7 @@ from os.path import isfile, join
 from sklearn import datasets, linear_model
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVR
+from sklearn.ensemble import RandomForestRegressor
 import xgboost as xgb
 from matplotlib import pyplot as plt
 import pdb
@@ -66,10 +67,10 @@ def loadData(dir):
     np.random.shuffle(file_list)
     #train_X_all = np.zeros([len(file_list), 14520, correct_l])
     #train_Y_all = np.zeros([len(file_list), 14520, problem_l])
-    train_X_all = np.zeros([10, 14520, correct_l])
-    train_Y_all = np.zeros([10, 14520, problem_l])
+    train_X_all = np.zeros([200, 14520, correct_l])
+    train_Y_all = np.zeros([200, 14520, problem_l])
     #for i in range(1,len(file_list) - 1):
-    for i in range(10):
+    for i in range(200):
         file_path = dir + file_list[i]
         try:
             train_X_sample, train_Y_sample = laodTrainingSample(file_path)
@@ -78,8 +79,11 @@ def loadData(dir):
         except Exception:
             continue
     
+    # day_level_data......
+    val_X, val_Y = laodTrainingSample(dir+file_list[102])
+
     #comment out here to chcek the data distribution on the scale of time line.
-    train_X, test_X, train_Y, test_Y = train_test_split(train_X_all.reshape(10*14520, -1), train_Y_all.reshape(10*14520, -1), test_size = 0.1, random_state=7)
+    train_X, test_X, train_Y, test_Y = train_test_split(train_X_all.reshape(200*14520, -1), train_Y_all.reshape(200*14520, -1), test_size = 0.1, random_state=7)
     ''' 
     train_X = train_X_all.reshape(96*14520, -1)
     train_Y = train_Y_all.reshape(96*14520, -1)
@@ -88,7 +92,7 @@ def loadData(dir):
     '''
     print('training data size is: ', train_X.shape)
     print('testing data size is: ', test_Y.shape)
-    return train_X, test_X, train_Y, test_Y 
+    return train_X, test_X, train_Y, test_Y, val_X, val_Y
     '''
     return train_X, train_Y
     '''
@@ -108,7 +112,7 @@ def loadData_seperate_day(dir):
 
     return train_X_all, test_X, train_Y_all, test_Y 
 
-def linearModel(train_X, test_X, train_Y, test_Y):
+def linearModel(train_X, test_X, train_Y, test_Y, val_X, val_Y):
     print('strat training the linear models ......')
     model_list = []
     '''
@@ -124,21 +128,30 @@ def linearModel(train_X, test_X, train_Y, test_Y):
     print(test_Y.shape)
     reg_linear = linear_model.LinearRegression()
     reg_lasso = linear_model.Lasso()
-    reg_ridge = linear_model.Ridge(alpha = 0.3)
+    reg_ridge = linear_model.Ridge(alpha = 5)
     svr_model = SVR(gamma='scale', C=1.0, epsilon=0.2)
+
     for i in range(train_Y.shape[1]):
         sensor_idx = raw_problem_idx[i]
         sensor_name = sensor_dict[sensor_idx]
         reg_ridge.fit(train_X, train_Y[:,i])
         #weights = reg_ridge.coef_
+        #weights_list = weights.tolist()
+        #most_important_sensor_idx = weights_list.sort(reverse=True)[:5]
+        #print('the most 5 import features for predicting ' + 'sensor_name: ' + )
         #print('the weight of the sensor_%d' %i + ' is :')
         #print(weights)
         model_list.append(reg_ridge)
         preds = reg_ridge.predict(test_X)
         preds = np.array(preds).reshape(-1)
-        test_label = test_Y[:,i].reshape(-1) 
+        test_label = test_Y[:,i].reshape(-1)
+        val_pred = np.array(reg_ridge.predict(val_X)).reshape(-1)
+        val_label = val_Y[:,i].reshape(-1)
         loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
+        val_loss = np.sqrt(np.mean(np.subtract(val_label, val_pred)**2))
         print('the loss of this model is :', loss)
+        print('the loss of this model on validation set :', val_loss)
+        '''
         plt.figure()
         plt.plot(preds[:200])
         plt.plot(test_label[:200])
@@ -146,7 +159,38 @@ def linearModel(train_X, test_X, train_Y, test_Y):
         plt.xlabel('Samples')
         plt.ylabel('Value')
         plt.title(sensor_name + '(loss=%f)' %loss)
-        plt.savefig('./res/predictions/sensor_%d_linear.png' %i)
+        plt.savefig('./res/day_pred/predictions/sensor_%d_linear.png' %i)
+        '''
+        plt.figure()
+        plt.plot(val_pred[:200])
+        plt.plot(val_label[:200])
+        plt.legend(['prediciton', 'label'])
+        plt.xlabel('Samples')
+        plt.ylabel('Value')
+        plt.title(sensor_name + '(loss=%f)' %val_loss)
+        plt.savefig('./res/day_pred/predictions/oneDay_sensor_%d_linear.png' %i)
+        plt.close()
+    '''
+    for j in range(val_Y.shape[1]):
+        sensor_idx = raw_problem_idx[j]
+        sensor_name = sensor_dict[sensor_idx]
+        reg_ridge = model_list[j]
+        val_pred = reg_ridge.predict(val_X)
+        val_pred = np.array(val_pred).reshape(-1)
+        val_label = val_Y[:,j].reshape(-1)
+        val_loss = np.sqrt(np.mean(np.subtract(val_label, val_pred)**2))
+        #pdb.set_trace()
+        print('the loss of this model on validation set :', val_loss)
+        plt.figure()
+        plt.plot(val_pred[:200])
+        plt.plot(val_label[:200])
+        plt.legend(['prediciton', 'label'])
+        plt.xlabel('Samples')
+        plt.ylabel('Value')
+        plt.title(sensor_name + '(loss=%f)' %val_loss)
+        plt.savefig('./res/day_pred/predictions/oneDay_sensor_%d_linear.png' %j)
+        plt.close()
+    '''
 
 def xgbModel(train_X, test_X, train_Y, test_Y):
     print('training the XGBoost models ......')
@@ -217,11 +261,46 @@ def xgbModel(train_X, test_X, train_Y, test_Y):
         plt.ylabel('Value')
         plt.title(sensor_name + '(loss=%f)' %loss)
         plt.savefig('./res/predictions/sensor_%d_xgb.png' %i)
+    
+def randomForestModel(train_X, test_X, train_Y, test_Y):
+    print('start training random forest model ...')
+    model_list = []
+    print('the data size is ......')
+    print(train_X.shape)
+    print(train_Y.shape)
+    print(test_X.shape)
+    print(test_Y.shape)
+    rf_model = RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=5,
+           max_features='auto', max_leaf_nodes=None,
+           min_impurity_decrease=0.0, min_impurity_split=None,
+           min_samples_leaf=1, min_samples_split=2,
+           min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=4,
+           oob_score=False, random_state=0, verbose=1, warm_start=False)
+    for i in range(train_Y.shape[1]):
+        sensor_idx = raw_problem_idx[i]
+        sensor_name = sensor_dict[sensor_idx]
+        rf_model.fit(train_X, train_Y[:,i])
+        model_list.append(rf_model)
+        preds = rf_model.predict(test_X)
+        preds = np.array(preds).reshape(-1)
+        test_label = test_Y[:,i].reshape(-1)
+        loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2)) 
+        print('the loss of this model is :', loss)
+        plt.figure()
+        plt.plot(preds[:200])
+        plt.plot(test_label[:200])
+        plt.legend(['prediciton', 'label'])
+        plt.xlabel('Samples')
+        plt.ylabel('Value')
+        plt.title(sensor_name + '(loss=%f)' %loss)
+        plt.savefig('./res/predictions/sensor_%d_rf.png' %i)
+        print('tsaining complete for ' + sensor_name + ' !!!')
 
 if __name__ == '__main__':
     input_dir = '/Users/tianyuzhang/Desktop/Intern/intern/ISUZU/OBD_tianyu/New_injector_failure_data/unzip/'
-    train_X, test_X, train_Y, test_Y = loadData(input_dir)
-    #linearModel(train_X, test_X, train_Y, test_Y)
-    xgbModel(train_X, test_X, train_Y, test_Y)
+    train_X, test_X, train_Y, test_Y, val_X, val_Y = loadData(input_dir)
+    #randomForestModel(train_X, test_X, train_Y, test_Y)
+    linearModel(train_X, test_X, train_Y, test_Y, val_X, val_Y)
+    #xgbModel(train_X, test_X, train_Y, test_Y)
     #train_X, train_Y = loadData(input_dir)
     #dataDistributionAnalysis(train_X, train_Y)
