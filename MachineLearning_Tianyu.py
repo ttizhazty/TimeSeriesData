@@ -151,25 +151,34 @@ def linearModel(train_X, test_X, train_Y, test_Y, val_X, val_Y):
         val_loss = np.sqrt(np.mean(np.subtract(val_label, val_pred)**2))
         print('the loss of this model is :', loss)
         print('the loss of this model on validation set :', val_loss)
-        '''
+        print('i am in plot !!!!!!') 
         plt.figure()
         plt.plot(preds[:200])
         plt.plot(test_label[:200])
-        plt.legend(['prediciton', 'label'])
+        plt.plot(test_label[:200]*0.85,'r')
+        plt.plot(test_label[:200]*1.15, 'r')
+        plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound'])
         plt.xlabel('Samples')
         plt.ylabel('Value')
         plt.title(sensor_name + '(loss=%f)' %loss)
         plt.savefig('./res/day_pred/predictions/sensor_%d_linear.png' %i)
-        '''
-        plt.figure()
+        plt.close()
+        
+        #plt.figure()
+        val_pred = reg_ridge.predict(val_X)
+        val_pred = np.array(val_pred).reshape(-1)
+        val_label = val_Y[:,i].reshape(-1) 
         plt.plot(val_pred[:200])
         plt.plot(val_label[:200])
-        plt.legend(['prediciton', 'label'])
+        plt.plot(val_label[:200]*0.85,'r')
+        plt.plot(val_label[:200]*1.15, 'r')
+        plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound'])
         plt.xlabel('Samples')
         plt.ylabel('Value')
         plt.title(sensor_name + '(loss=%f)' %val_loss)
         plt.savefig('./res/day_pred/predictions/oneDay_sensor_%d_linear.png' %i)
         plt.close()
+        
     '''
     for j in range(val_Y.shape[1]):
         sensor_idx = raw_problem_idx[j]
@@ -192,7 +201,7 @@ def linearModel(train_X, test_X, train_Y, test_Y, val_X, val_Y):
         plt.close()
     '''
 
-def xgbModel(train_X, test_X, train_Y, test_Y):
+def xgbModel(train_X, test_X, train_Y, test_Y, val_X, val_Y):
     print('training the XGBoost models ......')
     model_list = []
     #train_X = train_X.reshape(train_X.shape[0] * 14520, -1)
@@ -245,22 +254,42 @@ def xgbModel(train_X, test_X, train_Y, test_Y):
         print(train_label.shape)
         xgb_train = xgb.DMatrix(train_X, label=train_label)
         xgb_test = xgb.DMatrix(test_X)
+        xgb_val = xgb.DMatrix(val_X)
         watchlist = [(xgb_train, 'train')]
         model = xgb.train(plst1, xgb_train, num_rounds, watchlist)
         model_list.append(model)
         preds = model.predict(xgb_test, ntree_limit=model.best_ntree_limit)
         preds = np.array(preds).reshape(-1)
         test_label = test_Y[:,i].reshape(-1)
+        val_pred = model.predict(xgb_val, ntree_limit=model.best_ntree_limit)
+        val_pred = np.array(val_pred).reshape(-1)
+        val_label = val_Y[:,i].reshape(-1)
         loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
+        val_loss = np.sqrt(np.mean(np.subtract(val_label, val_pred)**2))
         print('the loss of the sensor_%d' %i + ' is :', loss) 
+        print('the loss of this model on validation ser : ', val_loss)
         plt.figure()
         plt.plot(preds[:200])
         plt.plot(test_label[:200])
-        plt.legend(['prediciton', 'label'])
+        plt.plot(test_label[:200]*0.85,'r')
+        plt.plot(test_label[:200]*1.15, 'r')
+        plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound']) 
         plt.xlabel('Samples')
         plt.ylabel('Value')
         plt.title(sensor_name + '(loss=%f)' %loss)
-        plt.savefig('./res/predictions/sensor_%d_xgb.png' %i)
+        plt.savefig('./res/day_pred/predictions/sensor_%d_xgb.png' %i)
+        plt.close()
+
+        plt.plot(val_pred[:200])
+        plt.plot(val_label[:200])
+        plt.plot(val_label[:200]*0.85,'r')
+        plt.plot(val_label[:200]*1.15, 'r')
+        plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound'])
+        plt.xlabel('Samples')
+        plt.ylabel('Value')
+        plt.title(sensor_name + '(loss=%f)' %val_loss)
+        plt.savefig('./res/day_pred/predictions/oneDay_sensor_%d_xgb.png' %i)
+        plt.close() 
     
 def randomForestModel(train_X, test_X, train_Y, test_Y):
     print('start training random forest model ...')
@@ -289,18 +318,129 @@ def randomForestModel(train_X, test_X, train_Y, test_Y):
         plt.figure()
         plt.plot(preds[:200])
         plt.plot(test_label[:200])
-        plt.legend(['prediciton', 'label'])
+        plt.plot(test_label[:200]*0.9,'r.')
+        plt.plot(test_label[:200]*1.1, 'r.')
+        plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound'])
         plt.xlabel('Samples')
         plt.ylabel('Value')
         plt.title(sensor_name + '(loss=%f)' %loss)
         plt.savefig('./res/predictions/sensor_%d_rf.png' %i)
         print('tsaining complete for ' + sensor_name + ' !!!')
+    
+def encodeData(line):
+        line = line.strip('\n').split(',')
+        line = line[1:]
+        encoded_data = [0] * 88
+        if line[0] != '--':
+            idx = [0] * 88
+            # Encode the gear level into number
+            if line[4] == 'Neutral':
+               encoded_data[4] = 0
+            elif line[4][0] == '1':
+                encoded_data[4] = 1
+            elif line[4][0] == '2':
+                encoded_data[4] = 2
+            elif line[4][0] == '3':
+                encoded_data[4] = 3
+            elif line[4][0] == '4':
+                encoded_data[4] = 4
+            elif line[4][0] == '5':
+                encoded_data[4] = 5
+            else:
+                encoded_data[4] = 0
+            idx[4] = 1
+
+            # Encode the Clutch Pedal Depressed into number
+            if line[6] == 'Clutch Pedal Depressed (踏んだ)':
+                encoded_data[6] = 1
+            else:
+                encoded_data[6] = 0
+            idx[6] = 1
+
+            if line[7] == 'ブレーキペダル踏んだ':
+                encoded_data[7] = 1
+            else:
+                encoded_data[7] = 0
+            idx[7] = 1
+
+            if line[8] == 'OFF(クルーズ制御終了もしくは不可)':
+                encoded_data[8] = 0
+            else:
+                encoded_data[8] = 1
+            idx[8] = 1
+
+            if line[19] == 'DPFステータス0':
+                encoded_data[19] = 1
+            else:
+                encoded_data[19] = 0
+            idx[19] = 1
+
+            if line[24] == 'ITHモーター過電流防止Duty制限なし':
+                encoded_data[24] = 0
+            else:
+                encoded_data[24] = 1
+            idx[24] = 1
+
+            if line[25] == 'EGRモーター過電流防止Duty制限なし':
+                encoded_data[25] = 0
+            else:
+                encoded_data[25] = 1
+            idx[25] = 1
+
+            if line[26] == 'EGRモーター2過電流防止Duty制限なし':
+                encoded_data[26] = 0
+            else:
+                encoded_data[26] = 1 
+            idx[26] = 1
+
+            if line[55] == 'M/V OFF':
+                encoded_data[55] = 0
+            else:
+                encoded_data[55] = 1
+            idx[55] = 1
+
+            if line[56] == 'M/V OFF':
+                encoded_data[56] = 0
+            else:
+                encoded_data[56] = 1 
+            idx[56] = 1
+
+            if line[57] == 'M/V OFF':
+                encoded_data[57] = 0
+            else:
+                encoded_data[57] = 1
+            idx[57] = 1
+
+            if line[58] == 'ON':
+                encoded_data[58] = 1
+            else:
+                encoded_data[58] = 0
+            idx[58] = 1
+
+            for i in range(len(idx)):
+                if idx[i] == 0:
+                    encoded_data[i] = float(line[i])
+            return encoded_data
+        else:
+            return encoded_data
+
 
 if __name__ == '__main__':
     input_dir = '/Users/tianyuzhang/Desktop/Intern/intern/ISUZU/OBD_tianyu/New_injector_failure_data/unzip/'
     train_X, test_X, train_Y, test_Y, val_X, val_Y = loadData(input_dir)
     #randomForestModel(train_X, test_X, train_Y, test_Y)
-    linearModel(train_X, test_X, train_Y, test_Y, val_X, val_Y)
+    #linearModel(train_X, test_X, train_Y, test_Y, val_X, val_Y)
     #xgbModel(train_X, test_X, train_Y, test_Y)
     #train_X, train_Y = loadData(input_dir)
     #dataDistributionAnalysis(train_X, train_Y)
+    with open('./New_injector_failure_data/output.txt', 'r', encoding = 'Shift-JIS') as f:
+        test_data_raw = []
+        for line in f:
+            test_data_raw.append(encodeData(line))
+        test_data = np.array(test_data_raw)
+        test_bad_X = test_data[:, correct_idx]
+        test_bad_Y = test_data[:, problem_idx]
+    #linearModel(train_X, test_bad_X, train_Y, test_bad_Y, val_X, val_Y)
+    xgbModel(train_X, test_bad_X, train_Y, test_bad_Y, val_X, val_Y)
+
+

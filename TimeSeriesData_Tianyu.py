@@ -115,4 +115,4 @@ def loadData_seperate_day(dir):
 if __name__ == '__main__':
     input_dir = '/Users/tianyuzhang/Desktop/Intern/intern/ISUZU/OBD_tianyu/New_injector_failure_data/unzip/'
     train_X, test_X, train_Y, test_Y = loadData(input_dir)
-    Seq2seqV1 = Seq2seqModel(encode_dim=36,decode_dim=40,input_seq_len=121,output_seq_len=121,rnn_size=40,layer_size=3,dnn_size = [64,128,64],learning_rate=0.001,dropout=0.7,reg_lambda=0.5,train_X=train_X,train_Y=train_Y,test_X=test_X,test_Y=test_Y,sensor2sensor=True,train_epoch=300)
+    Seq2seqV1 = Seq2seqModel(encode_dim=36,decode_dim=40,input_seq_len=121,output_seq_len=121,rnn_size=40,layer_size=3,dnn_size = [64,128,256,512,256,128,64],learning_rate=0.1,dropout=0.7,reg_lambda=0.3,train_X=train_X,train_Y=train_Y,test_X=test_X,test_Y=test_Y,sensor2sensor=True,train_epoch=100)

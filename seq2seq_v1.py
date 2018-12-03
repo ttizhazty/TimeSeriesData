@@ -45,7 +45,7 @@ class Seq2seqModel(object):
         self.linear_out = self.input_seq
         for i in range(len(self.dnn_size)):
             self.linear_out = tf.add(tf.matmul(self.linear_out, self.weights['layer_%d_W' %i]), self.weights['layer_%d_b' %i])
-            self.linear_out = tf.nn.sigmoid(self.linear_out)
+            self.linear_out = tf.nn.tanh(self.linear_out)
             if self.dropout:
                 self.linear_out = tf.nn.dropout(self.linear_out, self.dropout)
         self.pred = tf.matmul(self.linear_out, self.weights['prediction_W'])
@@ -88,8 +88,8 @@ class Seq2seqModel(object):
                 _, pred, label, loss, eval_loss = self.sess.run([self.train_op, self.pred, self.output_seq, self.loss, self.eval_loss], feed_dict=feed_dict)
                 train_loss += loss / (121*120)
             print('training loss for epoch %d is:'%e, train_loss / self.train_X.shape[0])
-            if e % 10 == 0:
-                self.testFCModel(e)
+            #if e % 10 == 0:
+            self.testFCModel(e)
 
     def testFCModel(self, e):
         test_loss = 0
