@@ -153,10 +153,10 @@ def linearModel(train_X, test_X, train_Y, test_Y, val_X, val_Y):
         print('the loss of this model on validation set :', val_loss)
         print('i am in plot !!!!!!') 
         plt.figure()
-        plt.plot(preds[:200])
-        plt.plot(test_label[:200])
-        plt.plot(test_label[:200]*0.85,'r')
-        plt.plot(test_label[:200]*1.15, 'r')
+        plt.plot(preds[::1000])
+        plt.plot(test_label[::1000])
+        #plt.plot(test_label[::2000]*0.85,'r')
+        #plt.plot(test_label[::2000]*1.15, 'r')
         plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound'])
         plt.xlabel('Samples')
         plt.ylabel('Value')
@@ -168,10 +168,10 @@ def linearModel(train_X, test_X, train_Y, test_Y, val_X, val_Y):
         val_pred = reg_ridge.predict(val_X)
         val_pred = np.array(val_pred).reshape(-1)
         val_label = val_Y[:,i].reshape(-1) 
-        plt.plot(val_pred[:200])
-        plt.plot(val_label[:200])
-        plt.plot(val_label[:200]*0.85,'r')
-        plt.plot(val_label[:200]*1.15, 'r')
+        plt.plot(val_pred[::200])
+        plt.plot(val_label[::200])
+        plt.plot(val_label[::200]*0.85,'r')
+        plt.plot(val_label[::200]*1.15, 'r')
         plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound'])
         plt.xlabel('Samples')
         plt.ylabel('Value')
@@ -256,12 +256,16 @@ def xgbModel(train_X, test_X, train_Y, test_Y, val_X, val_Y):
         xgb_test = xgb.DMatrix(test_X)
         xgb_val = xgb.DMatrix(val_X)
         watchlist = [(xgb_train, 'train')]
-        model = xgb.train(plst1, xgb_train, num_rounds, watchlist)
-        model_list.append(model)
-        preds = model.predict(xgb_test, ntree_limit=model.best_ntree_limit)
+        #model = xgb.train(plst1, xgb_train, num_rounds, watchlist)
+        #model.save_model('./models/tree_models/sensor_%d' %i + '.mdoel')
+        #model_list.append(model)
+        print('loading model......')
+        model = xgb.Booster()
+        model.load_model('./models/tree_models/sensor_%d' %i + '.mdoel')
+        preds = model.predict(xgb_test)
         preds = np.array(preds).reshape(-1)
         test_label = test_Y[:,i].reshape(-1)
-        val_pred = model.predict(xgb_val, ntree_limit=model.best_ntree_limit)
+        val_pred = model.predict(xgb_val)
         val_pred = np.array(val_pred).reshape(-1)
         val_label = val_Y[:,i].reshape(-1)
         loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
@@ -269,21 +273,22 @@ def xgbModel(train_X, test_X, train_Y, test_Y, val_X, val_Y):
         print('the loss of the sensor_%d' %i + ' is :', loss) 
         print('the loss of this model on validation ser : ', val_loss)
         plt.figure()
-        plt.plot(preds[:200])
-        plt.plot(test_label[:200])
-        plt.plot(test_label[:200]*0.85,'r')
-        plt.plot(test_label[:200]*1.15, 'r')
-        plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound']) 
+        #plt.plot(preds[::1000])
+        plt.plot(test_label-preds)
+        #plt.plot(test_label[::1000]*0.85,'r')
+        #plt.plot(test_label[::1000]*1.15, 'r')
+        plt.legend(['difference'])
+        #plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound']) 
         plt.xlabel('Samples')
         plt.ylabel('Value')
         plt.title(sensor_name + '(loss=%f)' %loss)
         plt.savefig('./res/day_pred/predictions/sensor_%d_xgb.png' %i)
         plt.close()
 
-        plt.plot(val_pred[:200])
-        plt.plot(val_label[:200])
-        plt.plot(val_label[:200]*0.85,'r')
-        plt.plot(val_label[:200]*1.15, 'r')
+        plt.plot(val_pred[::200])
+        plt.plot(val_label[::200])
+        plt.plot(val_label[::200]*0.85,'r')
+        plt.plot(val_label[::200]*1.15, 'r')
         plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound'])
         plt.xlabel('Samples')
         plt.ylabel('Value')
@@ -328,101 +333,19 @@ def randomForestModel(train_X, test_X, train_Y, test_Y):
         print('tsaining complete for ' + sensor_name + ' !!!')
     
 def encodeData(line):
-        line = line.strip('\n').split(',')
-        line = line[1:]
-        encoded_data = [0] * 88
-        if line[0] != '--':
-            idx = [0] * 88
-            # Encode the gear level into number
-            if line[4] == 'Neutral':
-               encoded_data[4] = 0
-            elif line[4][0] == '1':
-                encoded_data[4] = 1
-            elif line[4][0] == '2':
-                encoded_data[4] = 2
-            elif line[4][0] == '3':
-                encoded_data[4] = 3
-            elif line[4][0] == '4':
-                encoded_data[4] = 4
-            elif line[4][0] == '5':
-                encoded_data[4] = 5
-            else:
-                encoded_data[4] = 0
-            idx[4] = 1
-
-            # Encode the Clutch Pedal Depressed into number
-            if line[6] == 'Clutch Pedal Depressed (踏んだ)':
-                encoded_data[6] = 1
-            else:
-                encoded_data[6] = 0
-            idx[6] = 1
-
-            if line[7] == 'ブレーキペダル踏んだ':
-                encoded_data[7] = 1
-            else:
-                encoded_data[7] = 0
-            idx[7] = 1
-
-            if line[8] == 'OFF(クルーズ制御終了もしくは不可)':
-                encoded_data[8] = 0
-            else:
-                encoded_data[8] = 1
-            idx[8] = 1
-
-            if line[19] == 'DPFステータス0':
-                encoded_data[19] = 1
-            else:
-                encoded_data[19] = 0
-            idx[19] = 1
-
-            if line[24] == 'ITHモーター過電流防止Duty制限なし':
-                encoded_data[24] = 0
-            else:
-                encoded_data[24] = 1
-            idx[24] = 1
-
-            if line[25] == 'EGRモーター過電流防止Duty制限なし':
-                encoded_data[25] = 0
-            else:
-                encoded_data[25] = 1
-            idx[25] = 1
-
-            if line[26] == 'EGRモーター2過電流防止Duty制限なし':
-                encoded_data[26] = 0
-            else:
-                encoded_data[26] = 1 
-            idx[26] = 1
-
-            if line[55] == 'M/V OFF':
-                encoded_data[55] = 0
-            else:
-                encoded_data[55] = 1
-            idx[55] = 1
-
-            if line[56] == 'M/V OFF':
-                encoded_data[56] = 0
-            else:
-                encoded_data[56] = 1 
-            idx[56] = 1
-
-            if line[57] == 'M/V OFF':
-                encoded_data[57] = 0
-            else:
-                encoded_data[57] = 1
-            idx[57] = 1
-
-            if line[58] == 'ON':
-                encoded_data[58] = 1
-            else:
-                encoded_data[58] = 0
-            idx[58] = 1
-
-            for i in range(len(idx)):
-                if idx[i] == 0:
-                    encoded_data[i] = float(line[i])
-            return encoded_data
-        else:
-            return encoded_data
+    line = line.strip('\n').split(',')
+    line = line[3:]
+    sample = []
+    if line[0] != '--':
+        for i in range(len(line)):
+            try:
+                sample.append(float(line[i]))
+            except ValueError:
+                continue
+        sample.append(0)
+        return sample
+    else:
+        return [0] * 88
 
 
 if __name__ == '__main__':
@@ -433,13 +356,35 @@ if __name__ == '__main__':
     #xgbModel(train_X, test_X, train_Y, test_Y)
     #train_X, train_Y = loadData(input_dir)
     #dataDistributionAnalysis(train_X, train_Y)
-    with open('./New_injector_failure_data/output.txt', 'r', encoding = 'Shift-JIS') as f:
-        test_data_raw = []
+    test_data_raw = []
+    with open('/Users/tianyuzhang/Desktop/Intern/intern/ISUZU/OBD_tianyu/validation_data/201501_201703/output_7000618_2016_8_2.txt', 'r', encoding = 'Shift-JIS') as f:
         for line in f:
-            test_data_raw.append(encodeData(line))
-        test_data = np.array(test_data_raw)
-        test_bad_X = test_data[:, correct_idx]
-        test_bad_Y = test_data[:, problem_idx]
+            try:
+                sample = encodeData(line)
+                if len(sample) == 88:
+                    test_data_raw.append(sample)
+            except (ValueError, IndexError):
+                continue
+    with open('/Users/tianyuzhang/Desktop/Intern/intern/ISUZU/OBD_tianyu/validation_data/201501_201703/output_7000618_2016_8_3.txt', 'r', encoding = 'Shift-JIS') as f:
+        for line in f:
+            try:
+                sample = encodeData(line)
+                if len(sample) == 88:
+                    test_data_raw.append(sample)
+            except (ValueError, IndexError):
+                continue
+    with open('/Users/tianyuzhang/Desktop/Intern/intern/ISUZU/OBD_tianyu/validation_data/201501_201703/output_7000618_2016_8_4.txt', 'r', encoding = 'Shift-JIS') as f:
+        for line in f:
+            try:
+                sample = encodeData(line)
+                if len(sample) == 88:
+                    test_data_raw.append(sample)
+            except (ValueError, IndexError):
+                continue
+    print(len(test_data_raw))
+    test_data = np.array(test_data_raw)
+    test_bad_X = test_data[:, correct_idx]
+    test_bad_Y = test_data[:, problem_idx]
     #linearModel(train_X, test_bad_X, train_Y, test_bad_Y, val_X, val_Y)
     xgbModel(train_X, test_bad_X, train_Y, test_bad_Y, val_X, val_Y)
 
