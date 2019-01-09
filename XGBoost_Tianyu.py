@@ -97,34 +97,71 @@ def laodTrainingSample(filepath):
             return np.zeros((1,35)), np.zeros((1,40))
 
 
-def linearModel(train_X, train_Y, test_case):
+def xgbModel(train_X, test_X, test_case):
     print('strat training the linear models ......')
     print('the data size is ......')
     print(train_X.shape)
     print(train_Y.shape)
-    reg_linear = linear_model.LinearRegression()
-    reg_lasso = linear_model.Lasso()
-    reg_ridge = linear_model.Ridge(alpha = 5)
-    svr_model = SVR(gamma='scale', C=1.0, epsilon=0.2)
+
+    params1={
+        'booster':'gbtree',
+        'objective': 'reg:linear',
+        'gamma':0.1,
+        'max_depth':7, 
+        'lambda':2,
+        'subsample':0.8,
+        'colsample_bytree':0.8,
+        'min_child_weight':1, 
+        'silent':0 ,
+        'eta': 0.05, 
+        'seed':1000,
+        #'nthread':7,
+        }
+
+    params2={
+        'booster':'gbtree',
+        'objective': 'reg:linear',
+        'gamma':0.1,
+        'max_depth':5, 
+        'lambda':2,
+        'subsample':0.5,
+        'colsample_bytree':0.8,
+        'min_child_weight':3, 
+        'silent':0 ,
+        'eta': 0.01, 
+        'seed':1000,
+        #'nthread':7,
+        }
+
+    plst1 = list(params1.items())
+    plst2 = list(params2.items())
+    # TODO:divided the training set again to check training status.......
+    num_rounds = 200
     c = 0
     for item in test_case:
         test_X = item[0]
         test_Y = item[1]
         print('the testing data size in this case is :', test_X.shape, test_Y.shape)
-
         for i in range(train_Y.shape[1]):
             sensor_idx = raw_problem_idx[i]
             sensor_name = sensor_dict[sensor_idx]
-            # training ......
-            if not os.path.isfile('./../models/linear_models/sensor_%d' %i + '.model'):
-            	reg_ridge.fit(train_X, train_Y[:,i])
-           		#model saving ...
-            	pickle.dump(reg_ridge, open('./../models/linear_models/sensor_%d' %i + '.model', 'wb'))
+            
+            # training .....
+            if not os.path.isfile('./../models/xgb_models/sensor_%d' %i + '.model'):
+                train_label = np.abs(train_Y[:,i]).reshape(-1)
+                xgb_train = xgb.DMatrix(train_X, label=train_label)
+                watchlist = [(xgb_train, 'train')]
+                model = xgb.train(plst1, xgb_train, num_rounds, watchlist)
+                #model saving ...
+                model.save_model('./../models/xgb_models/sensor_%d' %i + '.model')
             else:
-                with open('./../models/linear_models/sensor_%d' %i + '.model', 'rb') as f:
-                    reg_ridge = pickle.load(f)
-
-            preds = reg_ridge.predict(test_X)
+                print('loading model......')
+                model = xgb.Booster()
+                model.load_model('./../models/xgb_models/sensor_%d' %i + '.model')
+            
+            xgb_test = xgb.DMatrix(test_X)
+            
+            preds = model.predict(xgb_test)
             preds = np.array(preds).reshape(-1)
             test_label = test_Y[:,i].reshape(-1)
             loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
@@ -141,49 +178,12 @@ def linearModel(train_X, train_Y, test_case):
             plt.xlabel('Samples')
             plt.ylabel('Value')
             plt.title(sensor_name + '(loss=%f)' %loss)
-            plt.savefig('./../res/day_pred/predictions/case%d_'%c +'sensor_%d_linear.png' %i)
+            plt.savefig('./../res/day_pred/predictions_xgb/case%d_'%c +'sensor_%d_xgb.png' %i)
             plt.close()
-            '''
-            val_pred = reg_ridge.predict(val_X)
-            val_pred = np.array(val_pred).reshape(-1)
-            val_label = val_Y[:,i].reshape(-1) 
-            plt.plot(val_pred[::200])
-            plt.plot(val_label[::200])
-            plt.plot(val_label[::200]*0.85,'r')
-            plt.plot(val_label[::200]*1.15, 'r')
-            plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound'])
-            plt.xlabel('Samples')
-            plt.ylabel('Value')
-            plt.title(sensor_name + '(loss=%f)' %val_loss)
-            plt.savefig('./../res/day_pred/predictions/oneDay_sensor_%d_linear.png' %i)
-            plt.close()
-            '''
         c += 1
-        '''
-        for j in range(val_Y.shape[1]):
-            sensor_idx = raw_problem_idx[j]
-            sensor_name = sensor_dict[sensor_idx]
-            reg_ridge = model_list[j]
-            val_pred = reg_ridge.predict(val_X)
-            val_pred = np.array(val_pred).reshape(-1)
-            val_label = val_Y[:,j].reshape(-1)
-            val_loss = np.sqrt(np.mean(np.subtract(val_label, val_pred)**2))
-            #pdb.set_trace()
-            print('the loss of this model on validation set :', val_loss)
-            plt.figure()
-            plt.plot(val_pred[:200])
-            plt.plot(val_label[:200])
-            plt.legend(['prediciton', 'label'])
-            plt.xlabel('Samples')
-            plt.ylabel('Value')
-            plt.title(sensor_name + '(loss=%f)' %val_loss)
-            plt.savefig('./res/day_pred/predictions/oneDay_sensor_%d_linear.png' %j)
-            plt.close()
-        '''
-
 
 if __name__ == '__main__':
     train_input_path = './../processed_data/'
     test_input_path = './../processed_data/abnormal_data/'
     train_X, train_Y, test_case = trainTestSplit(train_input_path, test_input_path)
-    linearModel(train_X, train_Y, test_case)
+    xgbModel(train_X, train_Y, test_case)
