@@ -11,7 +11,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
 import xgboost as xgb
-import copy
 import matplotlib as mpl
 if os.environ.get('DISPLAY','')=='':
     print('no display found.')
@@ -42,10 +41,6 @@ for idx in raw_problem_idx:
     problem_idx.append(idx - 1) 
 problem_l = len(problem_idx)
 
-for idx in raw_correct_idx:
-    print(sensor_list[idx - 1].split('.')[1])
-exit()
-
 def trainTestSplit(train_input_path, test_input_path):
     train_folders = os.listdir(train_input_path)
     test_folders = os.listdir(test_input_path)
@@ -68,7 +63,7 @@ def trainTestSplit(train_input_path, test_input_path):
                 test_label = np.concatenate((test_label, test_Y), axis=0)
                 # print(test_feature.shape)
                 # print(test_label.shape)
-            test_case.append((test_feature, test_label, test_file))   
+            test_case.append((test_feature, test_label, test_files))   
     
     # Collect the training data
     print('loading training data')
@@ -79,7 +74,7 @@ def trainTestSplit(train_input_path, test_input_path):
                 train_files = os.listdir(train_input_path + folder)
                 np.random.shuffle(train_files)
                 for train_file in train_files:
-                    if cnt > 10000:
+                    if cnt > 2000:
                         break
                     print(cnt)
                     cnt += 1
@@ -88,22 +83,18 @@ def trainTestSplit(train_input_path, test_input_path):
                         # Sampling
                         sample_step = 30
                         train_X, train_Y = train_X[::sample_step,:], train_Y[::sample_step,:]
-                        # print(train_X.shape, train_Y.shape)
                         train_feature = np.concatenate((train_feature, train_X), axis=0)
                         train_label = np.concatenate((train_label, train_Y), axis=0)
-        print('data loading completed')
+        print('data loading completed')    
         new_data = np.concatenate((train_feature, train_label), axis=1)
         np.random.shuffle(new_data)
         train_feature = new_data[:,:35]
         train_label = new_data[:,35:]
-        pickle.dump(train_feature, open('./../res_data/sample_train_feature_2017.pkl', 'wb'))
-        pickle.dump(train_label, open('./../res_data/sample_train_label_2017.pkl', 'wb'))
     else:
         with open('./../res_data/sample_train_feature_2017.pkl', 'rb') as f:
             train_feature = pickle.load(f)
         with open('./../res_data/sample_train_label_2017.pkl', 'rb') as f:
             train_label = pickle.load(f)
-
     return train_feature, train_label, test_case
     
 
@@ -123,106 +114,112 @@ def laodTrainingSample(filepath):
         return train_X, train_Y
 
 
-def linearModel(train_X, train_Y, test_case):
+def xgbModel(train_X, test_X, test_case):
     print('strat training the linear models ......')
     print('the data size is ......')
     print(train_X.shape)
     print(train_Y.shape)
-    reg_linear = linear_model.LinearRegression()
-    reg_lasso = linear_model.Lasso()
-    reg_ridge = linear_model.Ridge(alpha = 3)
-    svr_model = SVR(gamma='scale', C=1.0, epsilon=0.2)
+
+    params1={
+        'booster':'gbtree',
+        'objective': 'reg:linear',
+        'gamma':0.1,
+        'max_depth':7, 
+        'lambda':2,
+        'subsample':0.8,
+        'colsample_bytree':0.8,
+        'min_child_weight':1, 
+        'silent':0 ,
+        'eta': 0.05, 
+        'seed':1000,
+        #'nthread':7,
+        }
+
+    params2={
+        'booster':'gbtree',
+        'objective': 'reg:linear',
+        'gamma':0.1,
+        'max_depth':5, 
+        'lambda':2,
+        'subsample':0.5,
+        'colsample_bytree':0.8,
+        'min_child_weight':3, 
+        'silent':0 ,
+        'eta': 0.01, 
+        'seed':1000,
+        #'nthread':7,
+        }
+
+    plst1 = list(params1.items())
+    plst2 = list(params2.items())
+    # TODO:divided the training set again to check training status.......
+    num_rounds = 400
     c = 0
     for item in test_case:
         test_X = item[0]
         test_Y = item[1]
         test_files = item[2]
         print('the testing data size in this case is :', test_X.shape, test_Y.shape)
-
         for i in range(train_Y.shape[1]):
             sensor_idx = raw_problem_idx[i]
             sensor_name = sensor_dict[sensor_idx]
-            # training ......
-            if not os.path.isfile('./../models/linear_models_sample2017/sensor_%d' %i + '.model'):
-            	reg_ridge.fit(train_X, train_Y[:,i])
-           		#model saving ...
-            	pickle.dump(reg_ridge, open('./../models/linear_models_sample2017/sensor_%d' %i + '.model', 'wb'))
+            
+            # training .....
+            if not os.path.isfile('./../models/xgb_models_sampledata/sensor_%d' %i + '.model'):
+                train_label = np.abs(train_Y[:,i]).reshape(-1)
+                xgb_train = xgb.DMatrix(train_X, label=train_label)
+                watchlist = [(xgb_train, 'train')]
+                model = xgb.train(plst1, xgb_train, num_rounds, watchlist)
+                #model saving ...
+                model.save_model('./../models/xgb_models_sampledata/sensor_%d' %i + '.model')
             else:
-                with open('./../models/linear_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
-                    reg_ridge = pickle.load(f)
-            train_preds = reg_ridge.predict(train_X)
-            train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))
+                print('loading model......')
+                model = xgb.Booster()
+                model.load_model('./../models/xgb_models_sampledata/sensor_%d' %i + '.model')
+            
+            xgb_test = xgb.DMatrix(test_X)
 
-            preds = reg_ridge.predict(test_X)
-            preds = np.array(preds).reshape(-1)
-            test_label = test_Y[:,i].reshape(-1)
+            train_label = np.abs(train_Y[:,i]).reshape(-1)
+            xgb_train = xgb.DMatrix(train_X, label=train_label)
+            train_preds = model.predict(xgb_train)
+            train_loss = np.sqrt(np.mean(np.subtract(train_label, train_preds)**2))
+
+            preds = model.predict(xgb_test)
+            preds = np.array(preds).reshape(-1).astype(float)
+            test_label = test_Y[:,i].reshape(-1).astype(float)
             loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
             difference = (preds - test_label) / test_label * 100
             difference[np.isinf(difference)] = preds[np.isinf(difference)]
             difference[np.isnan(difference)] = preds[np.isnan(difference)]
-            #difference[abs(difference) < 50] = 0
-            print(sensor_name)
-            weights = reg_ridge.coef_
-            weights = list(weights)
-            sorted_weights = sorted(weights, key = lambda x: abs(x))
-            sensor_idx_t = [weights.index(x) for x in sorted_weights[-5:]]
+            # difference[abs(difference)>50] = preds[abs(difference)>50]
+            # weight = model.get_score(importance_type='weight')
+            weight = model.get_fscore()
+            sorted_weights = sorted(weight.items(), key = lambda x : x [1])
+            sensor_idx_t = [int(x[0][1:]) for x in sorted_weights[-5:]]
             sensor_idx_p = [raw_correct_idx[x] for x in sensor_idx_t]
             sensor_list = [sensor_dict[x] for x in sensor_idx_p]
+            print(sensor_name)
             print(sensor_list)
             print('the train loss of this model is:', train_loss)
             print('the loss of this model is :', loss)
             print('i am in plot !!!!!!') 
             plt.figure()
-            # plt.plot(difference)
-            plt.plot(preds[::30])
-            plt.plot(test_label[::30])
+            # plt.plot(preds[::30])
+            # plt.plot(test_label[::30])
+            plt.plot(difference)
+            # plt.plot(test_label[::2000]*0.85,'r')
+            # plt.plot(test_label[::2000]*1.15, 'r')
+            #plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound'])
             plt.xlabel('Samples')
             plt.ylabel('Value')
-            # plt.ylim((-200, 200))
+            plt.ylim((-200,200))
             plt.title(sensor_name + '(loss=%f)' %loss)
-            #plt.savefig('./../res/day_pred/predictions_val_sample2017_twoline/case%d_'%c +'sensor_%d_linear.png' %i)
+            # plt.savefig('./../res/day_pred/predictions_val_xgb_sample2017/case%d_'%c +'sensor_%d_xgb.png' %i)
             plt.close()
-            '''
-            val_pred = reg_ridge.predict(val_X)
-            val_pred = np.array(val_pred).reshape(-1)
-            val_label = val_Y[:,i].reshape(-1) 
-            plt.plot(val_pred[::200])
-            plt.plot(val_label[::200])
-            plt.plot(val_label[::200]*0.85,'r')
-            plt.plot(val_label[::200]*1.15, 'r')
-            plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound'])
-            plt.xlabel('Samples')
-            plt.ylabel('Value')
-            plt.title(sensor_name + '(loss=%f)' %val_loss)
-            plt.savefig('./../res/day_pred/predictions/oneDay_sensor_%d_linear.png' %i)
-            plt.close()
-            '''
         c += 1
-        '''
-        for j in range(val_Y.shape[1]):
-            sensor_idx = raw_problem_idx[j]
-            sensor_name = sensor_dict[sensor_idx]
-            reg_ridge = model_list[j]
-            val_pred = reg_ridge.predict(val_X)
-            val_pred = np.array(val_pred).reshape(-1)
-            val_label = val_Y[:,j].reshape(-1)
-            val_loss = np.sqrt(np.mean(np.subtract(val_label, val_pred)**2))
-            #pdb.set_trace()
-            print('the loss of this model on validation set :', val_loss)
-            plt.figure()
-            plt.plot(val_pred[:200])
-            plt.plot(val_label[:200])
-            plt.legend(['prediciton', 'label'])
-            plt.xlabel('Samples')
-            plt.ylabel('Value')
-            plt.title(sensor_name + '(loss=%f)' %val_loss)
-            plt.savefig('./res/day_pred_longitme/predictions/oneDay_sensor_%d_linear.png' %j)
-            plt.close()
-        '''
-
 
 if __name__ == '__main__':
     train_input_path = './../processed_data/'
     test_input_path = './../processed_data/normal_data_1/'
     train_X, train_Y, test_case = trainTestSplit(train_input_path, test_input_path)
-    linearModel(train_X, train_Y, test_case)
+    xgbModel(train_X, train_Y, test_case)

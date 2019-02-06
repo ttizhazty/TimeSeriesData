@@ -12,6 +12,8 @@ from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
 import xgboost as xgb
 import matplotlib as mpl
+from collections import Counter
+
 if os.environ.get('DISPLAY','')=='':
     print('no display found.')
     mpl.use('Agg')
@@ -96,6 +98,17 @@ def laodTrainingSample(filepath):
         except IndexError:
             return np.zeros((1,35)), np.zeros((1,40))
 
+def resultAnalysis(difference, i):
+    if i == 0 and len(difference[difference > 200]) >= 3:
+        return False
+    elif i == 2 and len(difference[difference > 100]) >= 3:
+        return False
+    elif i == 6 and len(difference[difference > 200]) >= 3:
+        return False
+    elif i == 20 and len(difference[difference > 150]) >= 4:
+        return False
+    else:
+        return True
 
 def linearModel(train_X, train_Y, test_case):
     print('strat training the linear models ......')
@@ -106,59 +119,62 @@ def linearModel(train_X, train_Y, test_case):
     reg_lasso = linear_model.Lasso()
     reg_ridge = linear_model.Ridge(alpha = 5)
     svr_model = SVR(gamma='scale', C=1.0, epsilon=0.2)
-    c = 0
+    num_cnt  = 0
+    correct_cnt = 0
+    # c = 0
     for item in test_case:
         test_X = item[0]
         test_Y = item[1]
         print('the testing data size in this case is :', test_X.shape, test_Y.shape)
-
+        collector = []
         for i in range(train_Y.shape[1]):
             sensor_idx = raw_problem_idx[i]
             sensor_name = sensor_dict[sensor_idx]
             # training ......
-            if not os.path.isfile('./../models/linear_models/sensor_%d' %i + '.model'):
+            if not os.path.isfile('./../models/linear_models_sample2017/sensor_%d' %i + '.model'):
             	reg_ridge.fit(train_X, train_Y[:,i])
            		#model saving ...
-            	pickle.dump(reg_ridge, open('./../models/linear_models/sensor_%d' %i + '.model', 'wb'))
+            	pickle.dump(reg_ridge, open('./../models/linear_models_sample2017/sensor_%d' %i + '.model', 'wb'))
             else:
-                with open('./../models/linear_models/sensor_%d' %i + '.model', 'rb') as f:
+                with open('./../models/linear_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
                     reg_ridge = pickle.load(f)
 
             preds = reg_ridge.predict(test_X)
-            preds = np.array(preds).reshape(-1)
-            test_label = test_Y[:,i].reshape(-1)
+            preds = np.array(preds).reshape(-1).astype(float)[::10]
+            test_label = test_Y[:,i].reshape(-1).astype(float)[::10]
+            # preds[abs(preds-test_label) > 20] = test_label[abs(preds-test_label) > 20] * 0.9
             loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
-            difference = preds - test_label
-            print('the loss of this model is :', loss)
-            print('i am in plot !!!!!!') 
-            plt.figure()
-            plt.plot(difference)
-            #plt.plot(preds[::1000])
-            #plt.plot(test_label[::1000])
-            # plt.plot(test_label[::2000]*0.85,'r')
-            # plt.plot(test_label[::2000]*1.15, 'r')
-            #plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound'])
-            plt.xlabel('Samples')
-            plt.ylabel('Value')
-            plt.title(sensor_name + '(loss=%f)' %loss)
-            plt.savefig('./../res/day_pred/predictions_val/case%d_'%c +'sensor_%d_linear.png' %i)
-            plt.close()
-            '''
-            val_pred = reg_ridge.predict(val_X)
-            val_pred = np.array(val_pred).reshape(-1)
-            val_label = val_Y[:,i].reshape(-1) 
-            plt.plot(val_pred[::200])
-            plt.plot(val_label[::200])
-            plt.plot(val_label[::200]*0.85,'r')
-            plt.plot(val_label[::200]*1.15, 'r')
-            plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound'])
-            plt.xlabel('Samples')
-            plt.ylabel('Value')
-            plt.title(sensor_name + '(loss=%f)' %val_loss)
-            plt.savefig('./../res/day_pred/predictions/oneDay_sensor_%d_linear.png' %i)
-            plt.close()
-            '''
-        c += 1
+            difference = (preds - test_label) / test_label * 100
+            difference[np.isinf(difference)] = 0
+            difference[np.isnan(difference)] = 0
+            collector.append(resultAnalysis(difference, i))
+        collector = Counter(collector)
+        try:
+            error = collector[False]
+            if error >= 1:
+                num_cnt += 1
+            else:
+                correct_cnt += 1
+                num_cnt += 1
+        except KeyError:
+            correct_cnt += 1
+            num_cnt += 1
+            # print('the loss of this model is :', loss)
+            # print('i am in plot !!!!!!') 
+            # plt.figure()
+            # plt.plot(difference)
+            # #plt.plot(preds[::1000])
+            # #plt.plot(test_label[::1000])
+            # # plt.plot(test_label[::2000]*0.85,'r')
+            # # plt.plot(test_label[::2000]*1.15, 'r')
+            # #plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound'])
+            # plt.xlabel('Samples')
+            # plt.ylabel('Value')
+            # plt.ylim((-200,200))
+            # plt.title(sensor_name + '(loss=%f)' %loss)
+            # plt.savefig('./../res/day_pred_testing/predictions_val_sample2017/case%d_'%c +'sensor_%d_linear.png' %i)
+            # plt.close()
+        # c += 1
         '''
         for j in range(val_Y.shape[1]):
             sensor_idx = raw_problem_idx[j]
@@ -180,10 +196,11 @@ def linearModel(train_X, train_Y, test_case):
             plt.savefig('./res/day_pred/predictions/oneDay_sensor_%d_linear.png' %j)
             plt.close()
         '''
-
+    correct_rate = correct_cnt / num_cnt
+    print(correct_rate)
 
 if __name__ == '__main__':
     train_input_path = './../processed_data/'
-    test_input_path = './../processed_data/normal_data/'
+    test_input_path = './../processed_data/abnormal_data/'
     train_X, train_Y, test_case = trainTestSplit(train_input_path, test_input_path)
     linearModel(train_X, train_Y, test_case)

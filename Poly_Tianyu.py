@@ -12,6 +12,8 @@ from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
 import xgboost as xgb
 import copy
+from sklearn.preprocessing import PolynomialFeatures
+
 import matplotlib as mpl
 if os.environ.get('DISPLAY','')=='':
     print('no display found.')
@@ -41,10 +43,6 @@ correct_l = len(correct_idx)
 for idx in raw_problem_idx:
     problem_idx.append(idx - 1) 
 problem_l = len(problem_idx)
-
-for idx in raw_correct_idx:
-    print(sensor_list[idx - 1].split('.')[1])
-exit()
 
 def trainTestSplit(train_input_path, test_input_path):
     train_folders = os.listdir(train_input_path)
@@ -131,11 +129,14 @@ def linearModel(train_X, train_Y, test_case):
     reg_linear = linear_model.LinearRegression()
     reg_lasso = linear_model.Lasso()
     reg_ridge = linear_model.Ridge(alpha = 3)
+    ploy = PolynomialFeatures(degree = 2)
     svr_model = SVR(gamma='scale', C=1.0, epsilon=0.2)
     c = 0
+    train_X = ploy.fit_transform(train_X)
     for item in test_case:
         test_X = item[0]
         test_Y = item[1]
+        test_X = ploy.fit_transform(test_X)
         test_files = item[2]
         print('the testing data size in this case is :', test_X.shape, test_Y.shape)
 
@@ -143,13 +144,14 @@ def linearModel(train_X, train_Y, test_case):
             sensor_idx = raw_problem_idx[i]
             sensor_name = sensor_dict[sensor_idx]
             # training ......
-            if not os.path.isfile('./../models/linear_models_sample2017/sensor_%d' %i + '.model'):
-            	reg_ridge.fit(train_X, train_Y[:,i])
-           		#model saving ...
-            	pickle.dump(reg_ridge, open('./../models/linear_models_sample2017/sensor_%d' %i + '.model', 'wb'))
+            if not os.path.isfile('./../models/poly_models_sample2017/sensor_%d' %i + '.model'):
+                reg_ridge.fit(train_X, train_Y[:,i])
+                # model saving ...
+                pickle.dump(reg_ridge, open('./../models/poly_models_sample2017/sensor_%d' %i + '.model', 'wb'))
             else:
-                with open('./../models/linear_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
+                with open('./../models/poly_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
                     reg_ridge = pickle.load(f)
+
             train_preds = reg_ridge.predict(train_X)
             train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))
 
@@ -162,25 +164,25 @@ def linearModel(train_X, train_Y, test_case):
             difference[np.isnan(difference)] = preds[np.isnan(difference)]
             #difference[abs(difference) < 50] = 0
             print(sensor_name)
-            weights = reg_ridge.coef_
-            weights = list(weights)
-            sorted_weights = sorted(weights, key = lambda x: abs(x))
-            sensor_idx_t = [weights.index(x) for x in sorted_weights[-5:]]
-            sensor_idx_p = [raw_correct_idx[x] for x in sensor_idx_t]
-            sensor_list = [sensor_dict[x] for x in sensor_idx_p]
-            print(sensor_list)
+            # weights = ploy_model.coef_
+            # weights = list(weights)
+            # sorted_weights = sorted(weights, key = lambda x: abs(x))
+            # sensor_idx_t = [weights.index(x) for x in sorted_weights[-5:]]
+            # sensor_idx_p = [raw_correct_idx[x] for x in sensor_idx_t]
+            # sensor_list = [sensor_dict[x] for x in sensor_idx_p]
+            # print(sensor_list)
             print('the train loss of this model is:', train_loss)
             print('the loss of this model is :', loss)
             print('i am in plot !!!!!!') 
             plt.figure()
-            # plt.plot(difference)
-            plt.plot(preds[::30])
-            plt.plot(test_label[::30])
+            plt.plot(difference)
+            #plt.plot(preds[::30])
+            #plt.plot(test_label[::30])
             plt.xlabel('Samples')
             plt.ylabel('Value')
             # plt.ylim((-200, 200))
             plt.title(sensor_name + '(loss=%f)' %loss)
-            #plt.savefig('./../res/day_pred/predictions_val_sample2017_twoline/case%d_'%c +'sensor_%d_linear.png' %i)
+            plt.savefig('./../res/day_pred/predictions_poly_sample2017/case%d_'%c +'sensor_%d_linear.png' %i)
             plt.close()
             '''
             val_pred = reg_ridge.predict(val_X)

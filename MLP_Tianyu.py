@@ -10,6 +10,7 @@ from sklearn import datasets, linear_model
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.neural_network import MLPRegressor
 import xgboost as xgb
 import copy
 import matplotlib as mpl
@@ -42,9 +43,9 @@ for idx in raw_problem_idx:
     problem_idx.append(idx - 1) 
 problem_l = len(problem_idx)
 
-for idx in raw_correct_idx:
-    print(sensor_list[idx - 1].split('.')[1])
-exit()
+# for idx in raw_correct_idx:
+#     print(sensor_list[idx - 1].split('.')[1])
+# exit()
 
 def trainTestSplit(train_input_path, test_input_path):
     train_folders = os.listdir(train_input_path)
@@ -132,6 +133,7 @@ def linearModel(train_X, train_Y, test_case):
     reg_lasso = linear_model.Lasso()
     reg_ridge = linear_model.Ridge(alpha = 3)
     svr_model = SVR(gamma='scale', C=1.0, epsilon=0.2)
+    mlp_model = MLPRegressor(hidden_layer_sizes=(35,64,128,64,32,1), activation='tanh', solver='lbfgs', random_state=1, max_iter=200, learning_rate_init=0.001)
     c = 0
     for item in test_case:
         test_X = item[0]
@@ -140,48 +142,49 @@ def linearModel(train_X, train_Y, test_case):
         print('the testing data size in this case is :', test_X.shape, test_Y.shape)
 
         for i in range(train_Y.shape[1]):
-            sensor_idx = raw_problem_idx[i]
-            sensor_name = sensor_dict[sensor_idx]
-            # training ......
-            if not os.path.isfile('./../models/linear_models_sample2017/sensor_%d' %i + '.model'):
-            	reg_ridge.fit(train_X, train_Y[:,i])
-           		#model saving ...
-            	pickle.dump(reg_ridge, open('./../models/linear_models_sample2017/sensor_%d' %i + '.model', 'wb'))
-            else:
-                with open('./../models/linear_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
-                    reg_ridge = pickle.load(f)
-            train_preds = reg_ridge.predict(train_X)
-            train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))
+            if i in [0, 2, 6,20]:
+                sensor_idx = raw_problem_idx[i]
+                sensor_name = sensor_dict[sensor_idx]
+                # training ......
+                if not os.path.isfile('./../models/mlp_models_sample2017/sensor_%d' %i + '.model'):
+                	mlp_model.fit(train_X, train_Y[:,i])
+               		#model saving ...
+                	pickle.dump(mlp_model, open('./../models/mlp_models_sample2017/sensor_%d' %i + '.model', 'wb'))
+                else:
+                    with open('./../models/mlp_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
+                        mlp_model = pickle.load(f)
+                train_preds = mlp_model.predict(train_X)
+                train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))
 
-            preds = reg_ridge.predict(test_X)
-            preds = np.array(preds).reshape(-1)
-            test_label = test_Y[:,i].reshape(-1)
-            loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
-            difference = (preds - test_label) / test_label * 100
-            difference[np.isinf(difference)] = preds[np.isinf(difference)]
-            difference[np.isnan(difference)] = preds[np.isnan(difference)]
-            #difference[abs(difference) < 50] = 0
-            print(sensor_name)
-            weights = reg_ridge.coef_
-            weights = list(weights)
-            sorted_weights = sorted(weights, key = lambda x: abs(x))
-            sensor_idx_t = [weights.index(x) for x in sorted_weights[-5:]]
-            sensor_idx_p = [raw_correct_idx[x] for x in sensor_idx_t]
-            sensor_list = [sensor_dict[x] for x in sensor_idx_p]
-            print(sensor_list)
-            print('the train loss of this model is:', train_loss)
-            print('the loss of this model is :', loss)
-            print('i am in plot !!!!!!') 
-            plt.figure()
-            # plt.plot(difference)
-            plt.plot(preds[::30])
-            plt.plot(test_label[::30])
-            plt.xlabel('Samples')
-            plt.ylabel('Value')
-            # plt.ylim((-200, 200))
-            plt.title(sensor_name + '(loss=%f)' %loss)
-            #plt.savefig('./../res/day_pred/predictions_val_sample2017_twoline/case%d_'%c +'sensor_%d_linear.png' %i)
-            plt.close()
+                preds = mlp_model.predict(test_X)
+                preds = np.array(preds).reshape(-1)
+                test_label = test_Y[:,i].reshape(-1)
+                loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
+                difference = (preds - test_label) / test_label * 100
+                difference[np.isinf(difference)] = preds[np.isinf(difference)]
+                difference[np.isnan(difference)] = preds[np.isnan(difference)]
+                #difference[abs(difference) < 50] = 0
+                print(sensor_name)
+                # weights = mlp_model.coef_
+                # weights = list(weights)
+                # sorted_weights = sorted(weights, key = lambda x: abs(x))
+                # sensor_idx_t = [weights.index(x) for x in sorted_weights[-5:]]
+                # sensor_idx_p = [raw_correct_idx[x] for x in sensor_idx_t]
+                # sensor_list = [sensor_dict[x] for x in sensor_idx_p]
+                # print(sensor_list)
+                print('the train loss of this model is:', train_loss)
+                print('the loss of this model is :', loss)
+                print('i am in plot !!!!!!') 
+                plt.figure()
+                # plt.plot(difference)
+                plt.plot(preds[::30])
+                plt.plot(test_label[::30])
+                plt.xlabel('Samples')
+                plt.ylabel('Value')
+                # plt.ylim((-200, 200))
+                plt.title(sensor_name + '(loss=%f)' %loss)
+                plt.savefig('./../res/day_pred/predictions_mlp_sample2017/case%d_'%c +'sensor_%d_mlp.png' %i)
+                plt.close()
             '''
             val_pred = reg_ridge.predict(val_X)
             val_pred = np.array(val_pred).reshape(-1)
@@ -198,31 +201,11 @@ def linearModel(train_X, train_Y, test_case):
             plt.close()
             '''
         c += 1
-        '''
-        for j in range(val_Y.shape[1]):
-            sensor_idx = raw_problem_idx[j]
-            sensor_name = sensor_dict[sensor_idx]
-            reg_ridge = model_list[j]
-            val_pred = reg_ridge.predict(val_X)
-            val_pred = np.array(val_pred).reshape(-1)
-            val_label = val_Y[:,j].reshape(-1)
-            val_loss = np.sqrt(np.mean(np.subtract(val_label, val_pred)**2))
-            #pdb.set_trace()
-            print('the loss of this model on validation set :', val_loss)
-            plt.figure()
-            plt.plot(val_pred[:200])
-            plt.plot(val_label[:200])
-            plt.legend(['prediciton', 'label'])
-            plt.xlabel('Samples')
-            plt.ylabel('Value')
-            plt.title(sensor_name + '(loss=%f)' %val_loss)
-            plt.savefig('./res/day_pred_longitme/predictions/oneDay_sensor_%d_linear.png' %j)
-            plt.close()
-        '''
+
 
 
 if __name__ == '__main__':
     train_input_path = './../processed_data/'
-    test_input_path = './../processed_data/normal_data_1/'
+    test_input_path = './../processed_data/abnormal_data_1/'
     train_X, train_Y, test_case = trainTestSplit(train_input_path, test_input_path)
     linearModel(train_X, train_Y, test_case)

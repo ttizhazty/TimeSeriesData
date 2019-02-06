@@ -67,34 +67,54 @@ def trainTestSplit(train_input_path, test_input_path):
     
     # Collect the training data
     print('loading training data')
-    cnt = 0
-    for folder in train_folders:
-        if len(folder) >= 10:
-            train_files = os.listdir(train_input_path + folder)
-            for train_file in train_files:
-                if cnt > 1000:
-                    break
-                print(cnt)
-                cnt += 1
-                if train_file not in all_test_files:
-                    train_X, train_Y = laodTrainingSample(train_input_path + folder + '/' + train_file)
-                    train_feature = np.concatenate((train_feature, train_X), axis=0)
-                    train_label = np.concatenate((train_label, train_Y), axis=0)
-    print('data loading completed')    
-
+    if not os.path.isfile('./../res_data/sample_train_feature_all.pkl'):
+        cnt = 0
+        for folder in train_folders:
+            if len(folder) >= 10:
+                train_files = os.listdir(train_input_path + folder)
+                np.random.shuffle(train_files)
+                for train_file in train_files:
+                    if cnt > 100000:
+                        break
+                    print(cnt)
+                    cnt += 1
+                    if train_file not in all_test_files: #and train_file[7:11] == '2017':
+                        print(train_file)
+                        train_X, train_Y = laodTrainingSample(train_input_path + folder + '/' + train_file)
+                        # Sampling
+                        sample_step = 30
+                        train_X, train_Y = train_X[::sample_step,:], train_Y[::sample_step,:]
+                        train_feature = np.concatenate((train_feature, train_X), axis=0)
+                        train_label = np.concatenate((train_label, train_Y), axis=0)
+        print('data loading completed')    
+        new_data = np.concatenate((train_feature, train_label), axis=1)
+        np.random.shuffle(new_data)
+        train_feature = new_data[:,:35]
+        train_label = new_data[:,35:]
+        pickle.dump(train_feature, open('./../res_data/sample_train_feature_all.pkl', 'wb'))
+        pickle.dump(train_label, open('./../res_data/sample_train_label_all.pkl', 'wb'))
+    else:
+        with open('./../res_data/sample_train_feature_all.pkl', 'rb') as f:
+            train_feature = pickle.load(f)
+        with open('./../res_data/sample_train_label_all.pkl', 'rb') as f:
+            train_label = pickle.load(f)
     return train_feature, train_label, test_case
     
 
 def laodTrainingSample(filepath):
     with open(filepath, 'rb') as f:
         train_one_day = pickle.load(f)
-        train_one_day = np.array(train_one_day)
         try:
+            temp = []
+            for item in train_one_day:
+                if len(item) == 88:
+                    temp.append(item)
+            train_one_day = np.array(temp)
             train_X = train_one_day[:, correct_idx]
             train_Y = train_one_day[:, problem_idx]
-            return train_X, train_Y
         except IndexError:
-            return np.zeros((1,35)), np.zeros((1,40))
+            train_X, train_Y = np.zeros((1,35)), np.zeros((1,40))
+        return train_X, train_Y
 
 
 def xgbModel(train_X, test_X, test_case):
@@ -136,7 +156,7 @@ def xgbModel(train_X, test_X, test_case):
     plst1 = list(params1.items())
     plst2 = list(params2.items())
     # TODO:divided the training set again to check training status.......
-    num_rounds = 200
+    num_rounds = 400
     c = 0
     for item in test_case:
         test_X = item[0]
@@ -147,17 +167,17 @@ def xgbModel(train_X, test_X, test_case):
             sensor_name = sensor_dict[sensor_idx]
             
             # training .....
-            if not os.path.isfile('./../models/xgb_models/sensor_%d' %i + '.model'):
+            if not os.path.isfile('./../models/xgb_models_sampledata/sensor_%d' %i + '.model'):
                 train_label = np.abs(train_Y[:,i]).reshape(-1)
                 xgb_train = xgb.DMatrix(train_X, label=train_label)
                 watchlist = [(xgb_train, 'train')]
                 model = xgb.train(plst1, xgb_train, num_rounds, watchlist)
                 #model saving ...
-                model.save_model('./../models/xgb_models/sensor_%d' %i + '.model')
+                model.save_model('./../models/xgb_models_sampledata/sensor_%d' %i + '.model')
             else:
                 print('loading model......')
                 model = xgb.Booster()
-                model.load_model('./../models/xgb_models/sensor_%d' %i + '.model')
+                model.load_model('./../models/xgb_models_sampledata/sensor_%d' %i + '.model')
             
             xgb_test = xgb.DMatrix(test_X)
             
@@ -165,7 +185,8 @@ def xgbModel(train_X, test_X, test_case):
             preds = np.array(preds).reshape(-1)
             test_label = test_Y[:,i].reshape(-1)
             loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
-            difference = preds - test_label
+            difference = (preds - test_label) / test_label * 100
+            difference[np.isinf(difference)] = preds[np.isinf(difference)]
             print('the loss of this model is :', loss)
             print('i am in plot !!!!!!') 
             plt.figure()
@@ -177,8 +198,9 @@ def xgbModel(train_X, test_X, test_case):
             #plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound'])
             plt.xlabel('Samples')
             plt.ylabel('Value')
+            plt.ylim((-200,200))
             plt.title(sensor_name + '(loss=%f)' %loss)
-            plt.savefig('./../res/day_pred/predictions_xgb/case%d_'%c +'sensor_%d_xgb.png' %i)
+            plt.savefig('./../res/day_pred/predictions_xgb_sample2017/case%d_'%c +'sensor_%d_xgb.png' %i)
             plt.close()
         c += 1
 

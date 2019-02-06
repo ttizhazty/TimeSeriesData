@@ -1,0 +1,486 @@
+absolutely correct sensor
+[Accelerator pedal opening degree](%)
+[Actual Engine Torque](%)
+[Engine Speed](rpm)
+[Target fuel injection amount](mm3/st)
+[Current Gear]
+[Vehicle speed (25 pulses)](km/h)
+[CluchSW](MT only)
+[Brake SW]
+[Cruise Control Status]
+[DPF Status]
+[DPF PM accumulation status]
+[EGR Target Position](%)
+[Intake Throttle Duty](%)
+[Intake Throttle Target Position](%)
+[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)
+[RPCV Commanded Fuel Flow(medium small)・EGR BLDC 2 Duty](mm3/sec・%)
+[Target Rail Pressure](Mpa)
+[VNT Target Position](%)
+[Target Boost](%)
+[Engine Mode]
+[Target Idle rpm](rpm)
+[Exhaust pipe INJ ON / OFF state](%)
+[egr_bldc_pid_base_dc_1]
+[egr_bldc_pid_base_dc_2]
+[egr_bldc_p_term_fnl_1]
+[egr_bldc_p_term_fnl_2]
+[egr_bldc_i_term_fnl_1]
+[egr_bldc_i_term_fnl_2]
+[rpcv_dc_p_gain]
+[rpcv_dc_i_gain]
+[trb_map_p_term_fnl]
+[trb_map_i_term_fnl]
+[ith_dc_p_term]
+[ith_dc_i_term]
+[ith_dc_ff_fb]
+
+
+Linear Model
+
+[coolant temperature](℃)
+['[CluchSW](MT only)', '[DPF Status]', '[Cruise Control Status]', '[rpcv_dc_p_gain]', '[rpcv_dc_i_gain]']
+the train loss of this model is: 7.82214018969676
+the loss of this model is : 30.615202036444938
+i am in plot !!!!!!
+[fuel temperature](℃)
+['[Brake SW]', '[Cruise Control Status]', '[DPF Status]', '[rpcv_dc_p_gain]', '[rpcv_dc_i_gain]']
+the train loss of this model is: 8.29223899777614
+the loss of this model is : 23.324320919728073
+i am in plot !!!!!!
+[Post injection Q](mm3)
+['[Exhaust pipe INJ ON / OFF state](%)', '[DPF PM accumulation status]', '[rpcv_dc_i_gain]', '[rpcv_dc_p_gain]', '[DPF Status]']
+the train loss of this model is: 1.7146057106897457
+the loss of this model is : 0.20447113314849402
+i am in plot !!!!!!
+[Common rail pressure](MPa)
+['[DPF PM accumulation status]', '[Target Rail Pressure](Mpa)', '[rpcv_dc_p_gain]', '[DPF Status]', '[rpcv_dc_i_gain]']
+the train loss of this model is: 6.421949385299377
+the loss of this model is : 4.732134245216663
+i am in plot !!!!!!
+[DPF differential pressure](kPa)
+['[Cruise Control Status]', '[Exhaust pipe INJ ON / OFF state](%)', '[DPF PM accumulation status]', '[DPF Status]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 1.6345347067027962
+the loss of this model is : 0.37549306567723745
+i am in plot !!!!!!
+[Atmospheric pressure](kPa)
+['[Exhaust pipe INJ ON / OFF state](%)', '[Brake SW]', '[rpcv_dc_i_gain]', '[rpcv_dc_p_gain]', '[DPF Status]']
+the train loss of this model is: 1.0534161910295001
+the loss of this model is : 2.0121797736202818
+i am in plot !!!!!!
+[Intake air temperature](℃)
+['[DPF Status]', '[Brake SW]', '[Cruise Control Status]', '[rpcv_dc_p_gain]', '[rpcv_dc_i_gain]']
+the train loss of this model is: 8.179892335117392
+the loss of this model is : 8.803847777954514
+i am in plot !!!!!!
+[Boost pressure](kPa)
+['[Engine Mode]', '[DPF Status]', '[Cruise Control Status]', '[rpcv_dc_i_gain]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 9.598023679361305
+the loss of this model is : 5.821896684664349
+i am in plot !!!!!!
+[CSF inlet temperature](℃)
+['[Brake SW]', '[Cruise Control Status]', '[DPF Status]', '[rpcv_dc_i_gain]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 45.60226264781712
+the loss of this model is : 71.18767524224819
+i am in plot !!!!!!
+[DOC inlet temperature](℃)
+['[Brake SW]', '[DPF Status]', '[Cruise Control Status]', '[rpcv_dc_i_gain]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 40.62774414280863
+the loss of this model is : 61.96286402319997
+i am in plot !!!!!!
+[DPF error count]
+['[Exhaust pipe INJ ON / OFF state](%)', '[DPF PM accumulation status]', '[rpcv_dc_i_gain]', '[DPF Status]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 0.19510417711009356
+the loss of this model is : 0.03670506819647563
+i am in plot !!!!!!
+[DPF warning count]
+['[Exhaust pipe INJ ON / OFF state](%)', '[DPF PM accumulation status]', '[rpcv_dc_i_gain]', '[DPF Status]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 0.19544172541255123
+the loss of this model is : 0.03667952605740737
+i am in plot !!!!!!
+[DPF mileage status]
+['[Exhaust pipe INJ ON / OFF state](%)', '[DPF PM accumulation status]', '[rpcv_dc_i_gain]', '[DPF Status]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 0.19665359260801524
+the loss of this model is : 0.0335798483050592
+i am in plot !!!!!!
+[ITH Motor Protect Duty Limit Status]
+['[Exhaust pipe INJ ON / OFF state](%)', '[DPF PM accumulation status]', '[rpcv_dc_i_gain]', '[DPF Status]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 0.03902083542201873
+the loss of this model is : 0.007341013639278778
+i am in plot !!!!!!
+[EGR Motor Protect Duty Limit Status]
+['[Exhaust pipe INJ ON / OFF state](%)', '[DPF PM accumulation status]', '[rpcv_dc_i_gain]', '[DPF Status]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 0.03902083542201873
+the loss of this model is : 0.007341013639278778
+i am in plot !!!!!!
+[EGR Motor2 Protect Duty Limit Status]
+['[Exhaust pipe INJ ON / OFF state](%)', '[DPF PM accumulation status]', '[rpcv_dc_i_gain]', '[DPF Status]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 0.03902083542201873
+the loss of this model is : 0.007341013639278778
+i am in plot !!!!!!
+[DPF mode]
+['[Exhaust pipe INJ ON / OFF state](%)', '[DPF PM accumulation status]', '[rpcv_dc_i_gain]', '[DPF Status]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 841.6201805625716
+the loss of this model is : 159.04866878724323
+i am in plot !!!!!!
+[MAF](g/cyl)
+['[Exhaust pipe INJ ON / OFF state](%)', '[DPF Status]', '[Engine Mode]', '[rpcv_dc_i_gain]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 0.22003989700696955
+the loss of this model is : 0.1360620118726043
+i am in plot !!!!!!
+[EGR Duty](%)
+['[egr_bldc_i_term_fnl_2]', '[egr_bldc_p_term_fnl_2]', '[rpcv_dc_p_gain]', '[egr_bldc_i_term_fnl_1]', '[rpcv_dc_i_gain]']
+the train loss of this model is: 5.344190231128669
+the loss of this model is : 1.8542572304179132
+i am in plot !!!!!!
+[EGR Actual Position](%)
+['[Brake SW]', '[EGR Target Position](%)', '[rpcv_dc_p_gain]', '[Cruise Control Status]', '[rpcv_dc_i_gain]']
+the train loss of this model is: 4.2686087052885755
+the loss of this model is : 1.132396860999193
+i am in plot !!!!!!
+[Intake Throttle Actual Position](%)
+['[Intake Throttle Target Position](%)', '[ith_dc_ff_fb]', '[ith_dc_p_term]', '[Cruise Control Status]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 4.295846522138408
+the loss of this model is : 1.787899961400284
+i am in plot !!!!!!
+[IGN Voltage](V)
+['[Brake SW]', '[Cruise Control Status]', '[rpcv_dc_p_gain]', '[Engine Mode]', '[rpcv_dc_i_gain]']
+the train loss of this model is: 0.6372859149968395
+the loss of this model is : 0.868450023402244
+i am in plot !!!!!!
+[RPCV Duty(medium small)・PCV Close Timing(large)](%・CA)
+['[Cruise Control Status]', '[DPF Status]', '[Engine Mode]', '[rpcv_dc_i_gain]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 2.802705715016788
+the loss of this model is : 5.485006769165597
+i am in plot !!!!!!
+[RPCV Actual Current(medium small)・PCV F/B Control Quantity(large)](mA・CA)
+['[DPF Status]', '[Cruise Control Status]', '[rpcv_dc_i_gain]', '[rpcv_dc_p_gain]', '[Engine Mode]']
+the train loss of this model is: 46.08959776124061
+the loss of this model is : 85.7994873283786
+i am in plot !!!!!!
+[VNT actual Position](%)
+['[Engine Mode]', '[Cruise Control Status]', '[rpcv_dc_i_gain]', '[VNT Target Position](%)', '[rpcv_dc_p_gain]']
+the train loss of this model is: 2.672301262565231
+the loss of this model is : 0.38002813917478284
+i am in plot !!!!!!
+[Mail SOI](CA)
+['[CluchSW](MT only)', '[Engine Mode]', '[rpcv_dc_p_gain]', '[DPF Status]', '[rpcv_dc_i_gain]']
+the train loss of this model is: 3.4368344960048756
+the loss of this model is : 2.97572152705941
+i am in plot !!!!!!
+[Pilot SOI](CA)
+['[trb_map_i_term_fnl]', '[ith_dc_i_term]', '[Cruise Control Status]', '[DPF Status]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 2.2595441277536366
+the loss of this model is : 0.2899644332050128
+i am in plot !!!!!!
+[CAM CRANK Synchro Status]
+['[Cruise Control Status]', '[DPF Status]', '[Engine Mode]', '[rpcv_dc_i_gain]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 1.212337049363559
+the loss of this model is : 1.7573998953356444
+i am in plot !!!!!!
+[Cylinder1 Balancing Fuel Compensation](mm3/st)
+['[CluchSW](MT only)', '[DPF Status]', '[rpcv_dc_i_gain]', '[Cruise Control Status]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 1.7751167543178183
+the loss of this model is : 0.6030537499004865
+i am in plot !!!!!!
+[Cylinder2 Balancing Fuel Compensation](mm3/st)
+['[DPF PM accumulation status]', '[DPF Status]', '[Brake SW]', '[rpcv_dc_i_gain]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 1.2161799542198577
+the loss of this model is : 0.7252195975495772
+i am in plot !!!!!!
+[Cylinder3 Balancing Fuel Compensation](mm3/st)
+['[DPF Status]', '[CluchSW](MT only)', '[Cruise Control Status]', '[rpcv_dc_p_gain]', '[rpcv_dc_i_gain]']
+the train loss of this model is: 1.202843363351134
+the loss of this model is : 0.314623952697998
+i am in plot !!!!!!
+[Cylinder4 Balancing Fuel Compensation](mm3/st)
+['[DPF Status]', '[Brake SW]', '[Cruise Control Status]', '[rpcv_dc_i_gain]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 1.3941369464289792
+the loss of this model is : 0.3417225527389692
+i am in plot !!!!!!
+[Cylinder5 Balancing Fuel Compensation](mm3/st)
+['[DPF Status]', '[Engine Mode]', '[Cruise Control Status]', '[rpcv_dc_p_gain]', '[rpcv_dc_i_gain]']
+the train loss of this model is: 1.3006263696606983
+the loss of this model is : 0.4991995687045658
+i am in plot !!!!!!
+[Cylinder6 Balancing Fuel Compensation](mm3/st)
+['[Brake SW]', '[DPF Status]', '[rpcv_dc_p_gain]', '[Cruise Control Status]', '[rpcv_dc_i_gain]']
+the train loss of this model is: 1.7554117462469747
+the loss of this model is : 0.8152536011125517
+i am in plot !!!!!!
+[Injection amount of exhaust pipe INJ](mm3/st)
+['[Cruise Control Status]', '[rpcv_dc_i_gain]', '[Engine Mode]', '[rpcv_dc_p_gain]', '[Exhaust pipe INJ ON / OFF state](%)']
+the train loss of this model is: 1.7301267286691375e-06
+the loss of this model is : 6.746944870358294e-07
+i am in plot !!!!!!
+[Exhaust pipe INJ fuel pressure](kPa)
+['[Engine Mode]', '[DPF Status]', '[Cruise Control Status]', '[rpcv_dc_i_gain]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 43.2376921058416
+the loss of this model is : 20.29257019976656
+i am in plot !!!!!!
+[Compressor outlet temperature](℃)
+['[egr_bldc_p_term_fnl_2]', '[DPF Status]', '[Cruise Control Status]', '[rpcv_dc_i_gain]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 1.1992289106499072
+the loss of this model is : 0.6476743112688313
+i am in plot !!!!!!
+[Turbo EVRV Duty output](%)
+['[rpcv_dc_i_gain]', '[rpcv_dc_p_gain]', '[egr_bldc_pid_base_dc_2]', '[egr_bldc_i_term_fnl_2]', '[egr_bldc_p_term_fnl_2]']
+the train loss of this model is: 2.92581325440204e-06
+the loss of this model is : 9.69788998605994e-07
+i am in plot !!!!!!
+[trb_trg_base_pos]
+['[DPF PM accumulation status]', '[Cruise Control Status]', '[DPF Status]', '[rpcv_dc_i_gain]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 5.431481039651329
+the loss of this model is : 3.5697837825975314
+i am in plot !!!!!!
+[trb_map_fb_pos]
+['[Cruise Control Status]', '[trb_map_i_term_fnl]', '[rpcv_dc_i_gain]', '[trb_map_p_term_fnl]', '[rpcv_dc_p_gain]']
+the train loss of this model is: 0.6907817436187476
+the loss of this model is : 0.2851500982293039
+i am in plot !!!!!!
+
+
+
+
+
+XGB Model
+
+[coolant temperature](℃)
+['[Target fuel injection amount](mm3/st)', '[RPCV Commanded Fuel Flow(medium small)・EGR BLDC 2 Duty](mm3/sec・%)', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)', '[Engine Speed](rpm)', '[rpcv_dc_i_gain]']
+the train loss of this model is: 4.656504147201367
+the loss of this model is : 9.230367426369746
+i am in plot !!!!!!
+loading model......
+[fuel temperature](℃)
+['[Target fuel injection amount](mm3/st)', '[RPCV Commanded Fuel Flow(medium small)・EGR BLDC 2 Duty](mm3/sec・%)', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)', '[Engine Speed](rpm)', '[rpcv_dc_i_gain]']
+the train loss of this model is: 4.930564647563787
+the loss of this model is : 6.188288926407159
+i am in plot !!!!!!
+loading model......
+[Post injection Q](mm3)
+['[Accelerator pedal opening degree](%)', '[Target fuel injection amount](mm3/st)', '[RPCV Commanded Fuel Flow(medium small)・EGR BLDC 2 Duty](mm3/sec・%)', '[Engine Speed](rpm)', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)']
+the train loss of this model is: 0.6306364478769898
+the loss of this model is : 0.022034495101262448
+i am in plot !!!!!!
+loading model......
+[Common rail pressure](MPa)
+['[Target fuel injection amount](mm3/st)', '[Target Rail Pressure](Mpa)', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)', '[Engine Speed](rpm)', '[RPCV Commanded Fuel Flow(medium small)・EGR BLDC 2 Duty](mm3/sec・%)']
+the train loss of this model is: 4.32390766960834
+the loss of this model is : 1.7834924539433439
+i am in plot !!!!!!
+loading model......
+[DPF differential pressure](kPa)
+['[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)', '[Target Rail Pressure](Mpa)', '[VNT Target Position](%)', '[Vehicle speed (25 pulses)](km/h)', '[Engine Speed](rpm)']
+the train loss of this model is: 0.28279840808751305
+the loss of this model is : 0.20999490100778095
+i am in plot !!!!!!
+loading model......
+[Atmospheric pressure](kPa)
+['[Actual Engine Torque](%)', '[Target Rail Pressure](Mpa)', '[Engine Speed](rpm)', '[Target fuel injection amount](mm3/st)', '[Target Boost](%)']
+the train loss of this model is: 0.6162279147889065
+the loss of this model is : 0.3492501716517595
+i am in plot !!!!!!
+loading model......
+[Intake air temperature](℃)
+['[Target fuel injection amount](mm3/st)', '[RPCV Commanded Fuel Flow(medium small)・EGR BLDC 2 Duty](mm3/sec・%)', '[Engine Speed](rpm)', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)', '[rpcv_dc_i_gain]']
+the train loss of this model is: 5.9374420567532
+the loss of this model is : 5.058945065691777
+i am in plot !!!!!!
+loading model......
+[Boost pressure](kPa)
+['[Accelerator pedal opening degree](%)', '[VNT Target Position](%)', '[Target Rail Pressure](Mpa)', '[Vehicle speed (25 pulses)](km/h)', '[Engine Speed](rpm)']
+the train loss of this model is: 3.5648246162043984
+the loss of this model is : 2.2463214337943453
+i am in plot !!!!!!
+loading model......
+[CSF inlet temperature](℃)
+['[Vehicle speed (25 pulses)](km/h)', '[Target fuel injection amount](mm3/st)', '[Engine Speed](rpm)', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)', '[rpcv_dc_i_gain]']
+the train loss of this model is: 34.6775614456989
+the loss of this model is : 20.38714017098521
+i am in plot !!!!!!
+loading model......
+[DOC inlet temperature](℃)
+['[Target fuel injection amount](mm3/st)', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)', '[Vehicle speed (25 pulses)](km/h)', '[Engine Speed](rpm)', '[rpcv_dc_i_gain]']
+the train loss of this model is: 26.094674735229056
+the loss of this model is : 21.34735187900066
+i am in plot !!!!!!
+loading model......
+[DPF error count]
+['[Target fuel injection amount](mm3/st)', '[Engine Speed](rpm)', '[Intake Throttle Duty](%)', '[DPF Status]', '[DPF PM accumulation status]']
+the train loss of this model is: 0.0009759173708572479
+the loss of this model is : 2.2925668758582547e-05
+i am in plot !!!!!!
+loading model......
+[DPF warning count]
+['[DPF Status]', '[Engine Speed](rpm)', '[RPCV Commanded Fuel Flow(medium small)・EGR BLDC 2 Duty](mm3/sec・%)', '[DPF PM accumulation status]', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)']
+the train loss of this model is: 0.014316806642024523
+the loss of this model is : 0.00019966801300392355
+i am in plot !!!!!!
+loading model......
+[DPF mileage status]
+['[VNT Target Position](%)', '[trb_map_p_term_fnl]', '[Engine Speed](rpm)', '[rpcv_dc_i_gain]', '[DPF Status]']
+the train loss of this model is: 0.017489526811510638
+the loss of this model is : 0.0013522980079847464
+i am in plot !!!!!!
+loading model......
+[ITH Motor Protect Duty Limit Status]
+['[rpcv_dc_i_gain]', '[Exhaust pipe INJ ON / OFF state](%)', '[Intake Throttle Duty](%)', '[DPF PM accumulation status]', '[DPF Status]']
+the train loss of this model is: 0.0006469482790908385
+the loss of this model is : 5.660957733576751e-06
+i am in plot !!!!!!
+loading model......
+[EGR Motor Protect Duty Limit Status]
+['[rpcv_dc_i_gain]', '[Exhaust pipe INJ ON / OFF state](%)', '[Intake Throttle Duty](%)', '[DPF PM accumulation status]', '[DPF Status]']
+the train loss of this model is: 0.0006469482790908385
+the loss of this model is : 5.660957733576751e-06
+i am in plot !!!!!!
+loading model......
+[EGR Motor2 Protect Duty Limit Status]
+['[rpcv_dc_i_gain]', '[Exhaust pipe INJ ON / OFF state](%)', '[Intake Throttle Duty](%)', '[DPF PM accumulation status]', '[DPF Status]']
+the train loss of this model is: 0.0006469482790908385
+the loss of this model is : 5.660957733576751e-06
+i am in plot !!!!!!
+loading model......
+[DPF mode]
+['[RPCV Commanded Fuel Flow(medium small)・EGR BLDC 2 Duty](mm3/sec・%)', '[Target fuel injection amount](mm3/st)', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)', '[Engine Speed](rpm)', '[rpcv_dc_i_gain]']
+the train loss of this model is: 5.679540609164069
+the loss of this model is : 4.3566373436629
+i am in plot !!!!!!
+loading model......
+[MAF](g/cyl)
+['[Target fuel injection amount](mm3/st)', '[VNT Target Position](%)', '[Target Rail Pressure](Mpa)', '[EGR Target Position](%)', '[Engine Speed](rpm)']
+the train loss of this model is: 0.07186412648441638
+the loss of this model is : 0.04122836072842253
+i am in plot !!!!!!
+loading model......
+[EGR Duty](%)
+['[Target fuel injection amount](mm3/st)', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)', '[EGR Target Position](%)', '[egr_bldc_pid_base_dc_1]', '[Engine Speed](rpm)']
+the train loss of this model is: 4.478487328782244
+the loss of this model is : 1.7750749995005228
+i am in plot !!!!!!
+loading model......
+[EGR Actual Position](%)
+['[egr_bldc_i_term_fnl_1]', '[EGR Target Position](%)', '[Engine Speed](rpm)', '[egr_bldc_pid_base_dc_1]', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)']
+the train loss of this model is: 3.244085047512312
+the loss of this model is : 1.5615868239925244
+i am in plot !!!!!!
+loading model......
+[Intake Throttle Actual Position](%)
+['[Intake Throttle Target Position](%)', '[ith_dc_ff_fb]', '[Engine Speed](rpm)', '[ith_dc_p_term]', '[Intake Throttle Duty](%)']
+the train loss of this model is: 1.236555698752723
+the loss of this model is : 0.550725779497389
+i am in plot !!!!!!
+loading model......
+[IGN Voltage](V)
+['[RPCV Commanded Fuel Flow(medium small)・EGR BLDC 2 Duty](mm3/sec・%)', '[Target fuel injection amount](mm3/st)', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)', '[Engine Speed](rpm)', '[rpcv_dc_i_gain]']
+the train loss of this model is: 0.5008604893125708
+the loss of this model is : 0.60012457785551
+i am in plot !!!!!!
+loading model......
+[RPCV Duty(medium small)・PCV Close Timing(large)](%・CA)
+['[Target fuel injection amount](mm3/st)', '[Engine Speed](rpm)', '[RPCV Commanded Fuel Flow(medium small)・EGR BLDC 2 Duty](mm3/sec・%)', '[rpcv_dc_i_gain]', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)']
+the train loss of this model is: 0.5294338091492452
+the loss of this model is : 0.2904455359055669
+i am in plot !!!!!!
+loading model......
+[RPCV Actual Current(medium small)・PCV F/B Control Quantity(large)](mA・CA)
+['[Target fuel injection amount](mm3/st)', '[rpcv_dc_i_gain]', '[Engine Speed](rpm)', '[RPCV Commanded Fuel Flow(medium small)・EGR BLDC 2 Duty](mm3/sec・%)', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)']
+the train loss of this model is: 11.714209862506035
+the loss of this model is : 5.717896992169029
+i am in plot !!!!!!
+loading model......
+[VNT actual Position](%)
+['[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)', '[Target Rail Pressure](Mpa)', '[egr_bldc_pid_base_dc_1]', '[VNT Target Position](%)', '[Engine Speed](rpm)']
+the train loss of this model is: 1.3844610763360468
+the loss of this model is : 0.19660106934792373
+i am in plot !!!!!!
+loading model......
+[Mail SOI](CA)
+['[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)', '[VNT Target Position](%)', '[Target fuel injection amount](mm3/st)', '[rpcv_dc_i_gain]', '[Engine Speed](rpm)']
+the train loss of this model is: 1.4683360627439808
+the loss of this model is : 6.071313722048045
+i am in plot !!!!!!
+loading model......
+[Pilot SOI](CA)
+['[Target Rail Pressure](Mpa)', '[Actual Engine Torque](%)', '[Accelerator pedal opening degree](%)', '[Engine Speed](rpm)', '[Target fuel injection amount](mm3/st)']
+the train loss of this model is: 0.16206662436362992
+the loss of this model is : 0.010377678112330346
+i am in plot !!!!!!
+loading model......
+[CAM CRANK Synchro Status]
+['[Target Idle rpm](rpm)', '[Actual Engine Torque](%)', '[egr_bldc_p_term_fnl_1]', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)', '[Engine Speed](rpm)']
+the train loss of this model is: 0.1678299237725802
+the loss of this model is : 0.11757727475747708
+i am in plot !!!!!!
+loading model......
+[Cylinder1 Balancing Fuel Compensation](mm3/st)
+['[RPCV Commanded Fuel Flow(medium small)・EGR BLDC 2 Duty](mm3/sec・%)', '[rpcv_dc_i_gain]', '[Engine Speed](rpm)', '[Target fuel injection amount](mm3/st)', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)']
+the train loss of this model is: 0.857035802475452
+the loss of this model is : 3.1235867005465567
+i am in plot !!!!!!
+loading model......
+[Cylinder2 Balancing Fuel Compensation](mm3/st)
+['[Actual Engine Torque](%)', '[rpcv_dc_i_gain]', '[Engine Speed](rpm)', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)', '[Target fuel injection amount](mm3/st)']
+the train loss of this model is: 0.7201320201169562
+the loss of this model is : 0.5911779041551978
+i am in plot !!!!!!
+loading model......
+[Cylinder3 Balancing Fuel Compensation](mm3/st)
+['[rpcv_dc_i_gain]', '[Actual Engine Torque](%)', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)', '[Target fuel injection amount](mm3/st)', '[Engine Speed](rpm)']
+the train loss of this model is: 0.7055848280714304
+the loss of this model is : 1.3400692622507544
+i am in plot !!!!!!
+loading model......
+[Cylinder4 Balancing Fuel Compensation](mm3/st)
+['[rpcv_dc_i_gain]', '[Actual Engine Torque](%)', '[Engine Speed](rpm)', '[Target fuel injection amount](mm3/st)', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)']
+the train loss of this model is: 0.8050584962760046
+the loss of this model is : 1.3599504047400033
+i am in plot !!!!!!
+loading model......
+[Cylinder5 Balancing Fuel Compensation](mm3/st)
+['[RPCV Commanded Fuel Flow(medium small)・EGR BLDC 2 Duty](mm3/sec・%)', '[rpcv_dc_i_gain]', '[Engine Speed](rpm)', '[Target fuel injection amount](mm3/st)', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)']
+the train loss of this model is: 0.9245737145455906
+the loss of this model is : 1.0454088171031453
+i am in plot !!!!!!
+loading model......
+[Cylinder6 Balancing Fuel Compensation](mm3/st)
+['[RPCV Commanded Fuel Flow(medium small)・EGR BLDC 2 Duty](mm3/sec・%)', '[Actual Engine Torque](%)', '[Target fuel injection amount](mm3/st)', '[Engine Speed](rpm)', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)']
+the train loss of this model is: 1.1903498171521638
+the loss of this model is : 1.17228300577068
+i am in plot !!!!!!
+loading model......
+[Injection amount of exhaust pipe INJ](mm3/st)
+['[Intake Throttle Duty](%)', '[egr_bldc_p_term_fnl_1]', '[Exhaust pipe INJ ON / OFF state](%)', '[rpcv_dc_i_gain]', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)']
+the train loss of this model is: 0.0016257284484819594
+the loss of this model is : 9.844322679640346e-07
+i am in plot !!!!!!
+loading model......
+[Exhaust pipe INJ fuel pressure](kPa)
+['[Target fuel injection amount](mm3/st)', '[CluchSW](MT only)', '[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)', '[rpcv_dc_i_gain]', '[egr_bldc_p_term_fnl_1]']
+the train loss of this model is: 25.595470614859742
+the loss of this model is : 0.0002241224522141979
+i am in plot !!!!!!
+loading model......
+[Compressor outlet temperature](℃)
+['[CluchSW](MT only)', '[Target fuel injection amount](mm3/st)', '[Intake Throttle Duty](%)', '[egr_bldc_p_term_fnl_1]', '[rpcv_dc_i_gain]']
+the train loss of this model is: 0.2964421599833834
+the loss of this model is : 1.2526258915177047e-05
+i am in plot !!!!!!
+loading model......
+[Turbo EVRV Duty output](%)
+['[egr_bldc_p_term_fnl_1]', '[egr_bldc_pid_base_dc_2]', '[egr_bldc_pid_base_dc_1]']
+the train loss of this model is: 0.00027722613258336865
+the loss of this model is : 7.033348083496094e-06
+i am in plot !!!!!!
+loading model......
+[trb_trg_base_pos]
+['[RPCV Desired Current(medium small)・EGR BLDC 2 Actual Position(large)](mA・%)', '[Target Rail Pressure](Mpa)', '[Target fuel injection amount](mm3/st)', '[VNT Target Position](%)', '[Engine Speed](rpm)']
+the train loss of this model is: 1.3908730975662078
+the loss of this model is : 1.2560361189867
+i am in plot !!!!!!
+loading model......
+[trb_map_fb_pos]
+['[Target fuel injection amount](mm3/st)', '[Vehicle speed (25 pulses)](km/h)', '[Engine Speed](rpm)', '[VNT Target Position](%)', '[trb_map_p_term_fnl]']
+the train loss of this model is: 0.37467382765517304
+the loss of this model is : 1.5964143212926414
+i am in plot !!!!!!
