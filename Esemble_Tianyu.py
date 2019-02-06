@@ -10,6 +10,7 @@ from sklearn import datasets, linear_model
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import PolynomialFeatures
 import xgboost as xgb
 import copy
 import matplotlib as mpl
@@ -125,29 +126,88 @@ def esembleModels(train_X, train_Y, test_case):
     print('the data size is ......')
     print(train_X.shape)
     print(train_Y.shape)
+    reg_ridge = linear_model.Ridge(alpha = 3)
     c = 0
     for item in test_case:
         test_X = item[0]
         test_Y = item[1]
         test_files = item[2]
         print('the testing data size in this case is :', test_X.shape, test_Y.shape)
-
+        first_layer_preds = np.zeros((test_Y.shape[0], 4))
+        first_layer_preds_train = np.zeros((train_Y.shape[0], 4))
         for i in range(train_Y.shape[1]):
             sensor_idx = raw_problem_idx[i]
             sensor_name = sensor_dict[sensor_idx]
-            
+            test_label = test_Y[:,i].reshape(-1)
+
             # ridge regression 
             print('loading ridge regression ......')
-            with open('./../models/models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
+            with open('./../models/linear_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
                 model = pickle.load(f)
             train_preds = mdoel.predict(train_X)
             train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))
-
-
-            preds = rf_model.predict(test_X)
+            preds = modelel.predict(test_X)
             preds = np.array(preds).reshape(-1)
-            test_label = test_Y[:,i].reshape(-1)
             loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
+            print('training loss of this model is ', train_loss)
+            print('testing loss of this model is: ', loss)
+            first_layer_preds_train[:,0] = train_preds
+            first_layer_preds[:,0] = preds 
+
+            print('loading xgb regression ......')
+            with open('./../models/xgb_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
+                model = pickle.load(f)
+            train_preds = mdoel.predict(train_X)
+            train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))
+            preds = modelel.predict(test_X)
+            preds = np.array(preds).reshape(-1)
+            loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
+            print('training loss of this model is ', train_loss)
+            print('testing loss of this model is: ', loss)
+            first_layer_preds_train[:,0] = train_preds
+            first_layer_preds[:,1] = preds 
+
+            print('loading poly regression ......')
+            with open('./../models/poly_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
+                model = pickle.load(f)
+            ploy = PolynomialFeatures(degree = 2)
+            train_X = ploy.fit_transform(train_X)
+            test_X = ploy.fit_transform(test_X)
+            train_preds = mdoel.predict(train_X)
+            train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))
+            preds = modelel.predict(test_X)
+            preds = np.array(preds).reshape(-1)
+            loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
+            print('training loss of this model is ', train_loss)
+            print('testing loss of this model is: ', loss)
+            first_layer_preds_train[:,0] = train_preds
+            first_layer_preds[:,2] = preds 
+
+            print('loading randomforest regression ......')
+            with open('./../models/rf_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
+                model = pickle.load(f)
+            train_preds = mdoel.predict(train_X)
+            train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))
+            preds = modelel.predict(test_X)
+            preds = np.array(preds).reshape(-1)
+            loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
+            print('training loss of this model is ', train_loss)
+            print('testing loss of this model is: ', loss)
+            first_layer_preds_train[:,0] = train_preds
+            first_layer_preds[:,3] = preds
+
+            # train a ensemble model ... 
+            if not os.path.isfile('./../models/esemble_models/sensor_%d' %i + '.model'):
+                reg_ridge.fit(first_layer_preds_train, train_Y[:,i])
+                #model saving ...
+                pickle.dump(reg_ridge, open('./../models/esemble_models/sensor_%d' %i + '.model', 'wb'))
+            else:
+                with open('./../models/esemble_models/sensor_%d' %i + '.model', 'rb') as f:
+                    reg_ridge = pickle.load(f)
+            # can use corss validation .....
+            train_preds = reg_ridge.predict(first_layer_preds_train)
+            train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))
+            preds = reg_ridge.predict(first_layer_preds)
             difference = (preds - test_label) / test_label * 100
             difference[np.isinf(difference)] = 0
             difference[np.isnan(difference)] = 0
@@ -161,7 +221,7 @@ def esembleModels(train_X, train_Y, test_case):
             plt.ylabel('Value')
             plt.ylim((-200, 200))
             plt.title(sensor_name + '(loss=%f)' %loss)
-            plt.savefig('./../res/day_pred/predictions_rf_sample2017/case%d_'%c +'sensor_%d_rf.png' %i)
+            plt.savefig('./../res/day_pred/predictions_esemble_sample2017/case%d_'%c +'sensor_%d_rf.png' %i)
             plt.close()
         c += 1
 
