@@ -42,9 +42,6 @@ for idx in raw_problem_idx:
     problem_idx.append(idx - 1) 
 problem_l = len(problem_idx)
 
-for idx in raw_correct_idx:
-    print(sensor_list[idx - 1].split('.')[1])
-exit()
 
 def trainTestSplit(train_input_path, test_input_path):
     train_folders = os.listdir(train_input_path)
@@ -128,7 +125,7 @@ def plotData(test_case):
     for item in test_case:
         test_X, test_Y, test_files = item
         print('the testing data size in this case is :', test_X.shape, test_Y.shape)
-        for i in range(len(train_Y.shape[1])):
+        for i in range(test_Y.shape[1]):
             sensor_idx = raw_problem_idx[i]
             sensor_name = sensor_dict[sensor_idx]
             print('i am in plot !!!!!!')
@@ -137,15 +134,16 @@ def plotData(test_case):
             plt.plot(test_label[::30])
             plt.xlabel('Samples')
             plt.ylabel('Value')
-            plt.title(sensor_name + '(loss=%f)' %loss)
-            plt.savefig('./../res/raw_data/case%d_'%c +'sensor_%d_raw_data.png' %i)
+            #plt.title(sensor_name + '(loss=%f)' %loss)
+            plt.savefig('./../res/raw_data_abnormal/case%d_'%c +'sensor_%d_raw_data.png' %i)
             plt.close() 
         c += 1           
 
 
 if __name__ == '__main__':
     train_input_path = './../processed_data/'
-    test_input_path = './../processed_data/normal_data_1/'
+    test_input_path = './../processed_data/abnormal_data_1/'
+    _, _, test_case = trainTestSplit(train_input_path, test_input_path)
     plotData(test_case)
 
     

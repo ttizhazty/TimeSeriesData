@@ -140,7 +140,7 @@ def linearModel(train_X, train_Y, test_case):
             if not os.path.isfile('./../models/rf_models_sample2017/sensor_%d' %i + '.model'):
                 rf_model.fit(train_X, train_Y[:,i])
                 #model saving ...
-                pickle.dump(rf_mdoel, open('./../models/rf_models_sample2017/sensor_%d' %i + '.model', 'wb'))
+                pickle.dump(rf_model, open('./../models/rf_models_sample2017/sensor_%d' %i + '.model', 'wb'))
             else:
                 with open('./../models/rf_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
                     rf_model = pickle.load(f)

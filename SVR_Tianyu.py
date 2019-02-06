@@ -123,11 +123,11 @@ def linearModel(train_X, train_Y, test_case):
     print('the data size is ......')
     print(train_X.shape)
     print(train_Y.shape)
-    svr_model = SVR(gamma='scale', C=1.0, epsilon=0.2)
+    svr_model = SVR(gamma=0.001, C=1.0, epsilon=0.2)
     c = 0
     for item in test_case:
-        test_X = item[0]
-        test_Y = item[1]
+        test_X = item[0].astype(float)
+        test_Y = item[1].astype(float)
         test_files = item[2]
         print('the testing data size in this case is :', test_X.shape, test_Y.shape)
 
@@ -136,13 +136,15 @@ def linearModel(train_X, train_Y, test_case):
             sensor_name = sensor_dict[sensor_idx]
             # training ......
             if not os.path.isfile('./../models/svr_models_sample2017/sensor_%d' %i + '.model'):
-                svr_model.fit(train_X, train_Y[:,i])
+                print('training model ...')
+                svr_model.fit(train_X.astype(float), train_Y[:,i].astype(float))
                 #model saving ...
                 pickle.dump(svr_model, open('./../models/svr_models_sample2017/sensor_%d' %i + '.model', 'wb'))
             else:
+                print('loading model ...')
                 with open('./../models/svr_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
                     svr_model = pickle.load(f)
-            train_preds = svr_model.predict(train_X)
+            train_preds = svr_model.predict(train_X.astype(float))
             train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))
 
             preds = svr_model.predict(test_X)
@@ -162,7 +164,7 @@ def linearModel(train_X, train_Y, test_case):
             plt.ylabel('Value')
             plt.ylim((-200, 200))
             plt.title(sensor_name + '(loss=%f)' %loss)
-            plt.savefig('./../res/day_pred/predictions_svr_sample2017/case%d_'%c +'sensor_%d_rf.png' %i)
+            plt.savefig('./../res/day_pred/predictions_svr_sample2017/case%d_'%c +'sensor_%d_svr.png' %i)
             plt.close()
         c += 1
 
