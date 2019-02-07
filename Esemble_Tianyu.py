@@ -143,10 +143,11 @@ def esembleModels(train_X, train_Y, test_case):
             # ridge regression 
             print('loading ridge regression ......')
             with open('./../models/linear_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
+                print('in pickle load')
                 model = pickle.load(f)
-            train_preds = mdoel.predict(train_X)
+            train_preds = model.predict(train_X)
             train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))
-            preds = modelel.predict(test_X)
+            preds = model.predict(test_X)
             preds = np.array(preds).reshape(-1)
             loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
             print('training loss of this model is ', train_loss)
@@ -155,11 +156,13 @@ def esembleModels(train_X, train_Y, test_case):
             first_layer_preds[:,0] = preds 
 
             print('loading xgb regression ......')
-            with open('./../models/xgb_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
-                model = pickle.load(f)
-            train_preds = mdoel.predict(train_X)
+            xgb_train = xgb.DMatrix(train_X)
+            xgb_test = xgb.DMatrix(test_X)
+            model = xgb.Booster()
+            model.load_model('./../models/xgb_models_sampledata/sensor_%d' %i + '.model')
+            train_preds = model.predict(xgb_train)
             train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))
-            preds = modelel.predict(test_X)
+            preds = model.predict(xgb_test)
             preds = np.array(preds).reshape(-1)
             loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
             print('training loss of this model is ', train_loss)
@@ -171,11 +174,11 @@ def esembleModels(train_X, train_Y, test_case):
             with open('./../models/poly_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
                 model = pickle.load(f)
             ploy = PolynomialFeatures(degree = 2)
-            train_X = ploy.fit_transform(train_X)
-            test_X = ploy.fit_transform(test_X)
-            train_preds = mdoel.predict(train_X)
+            train_X_poly = ploy.fit_transform(train_X)
+            test_X_poly = ploy.fit_transform(test_X)
+            train_preds = model.predict(train_X_poly)
             train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))
-            preds = modelel.predict(test_X)
+            preds = model.predict(test_X_poly)
             preds = np.array(preds).reshape(-1)
             loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
             print('training loss of this model is ', train_loss)
@@ -186,9 +189,9 @@ def esembleModels(train_X, train_Y, test_case):
             print('loading randomforest regression ......')
             with open('./../models/rf_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
                 model = pickle.load(f)
-            train_preds = mdoel.predict(train_X)
+            train_preds = model.predict(train_X)
             train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))
-            preds = modelel.predict(test_X)
+            preds = model.predict(test_X)
             preds = np.array(preds).reshape(-1)
             loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
             print('training loss of this model is ', train_loss)
@@ -221,12 +224,12 @@ def esembleModels(train_X, train_Y, test_case):
             plt.ylabel('Value')
             plt.ylim((-200, 200))
             plt.title(sensor_name + '(loss=%f)' %loss)
-            plt.savefig('./../res/day_pred/predictions_esemble_sample2017/case%d_'%c +'sensor_%d_rf.png' %i)
+            plt.savefig('./../res/day_pred_longtime/predictions_val_esemble_sample2017/case%d_'%c +'sensor_%d_rf.png' %i)
             plt.close()
         c += 1
 
 if __name__ == '__main__':
     train_input_path = './../processed_data/'
-    test_input_path = './../processed_data/normal_data_1/'
+    test_input_path = './../processed_data/normal_data/'
     train_X, train_Y, test_case = trainTestSplit(train_input_path, test_input_path)
-    linearModel(train_X, train_Y, test_case)
+    esembleModels(train_X, train_Y, test_case)

@@ -30,8 +30,8 @@ for item in sensor_list:
 raw_correct_idx = [1,2,3,4,5,6,7,8,9,20,23,31,33,34,39,40,41,43,44,45,55,56,57,58,60,65,67,69,70,71,72,73,74,75,76,79,80,81,82,83,88]
 raw_problem_idx = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21,22,24,25,26,27,28,29,30,32,35,36,37,38,42,46,47,48,49,50,51,52,53,54,59,61,63,64,66,68,77,78,84,85,86,87]
 '''
-raw_correct_idx = [1,2,3,4,5,6,7,8,9,20,23,31,33,34,39,40,41,43,44,45,55,60,69,70,71,72,73,74,75,76,79,80,81,82,83] # depends
-raw_problem_idx = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21,22,24,25,26,27,28,29,30,32,35,36,37,38,42,46,47,48,49,50,51,52,53,54,61,62,63,68,77,78]
+raw_correct_idx = [1,2,3,4,5,6,7,8,9,20,23,30,31,32,33,34,39,40,41,43,44,45,55,60,69,70,71,72,73,74,75,76,79,80,81,82,83] # depends
+raw_problem_idx = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21,22,24,25,26,27,28,29,35,36,37,38,42,46,47,48,49,50,51,52,53,54,61,62,63,68,77,78]
 correct_idx = []
 problem_idx = []
 for idx in raw_correct_idx:
@@ -42,16 +42,13 @@ for idx in raw_problem_idx:
     problem_idx.append(idx - 1) 
 problem_l = len(problem_idx)
 
-for idx in raw_correct_idx:
-    print(sensor_list[idx - 1].split('.')[1])
-exit()
 
 def trainTestSplit(train_input_path, test_input_path):
     train_folders = os.listdir(train_input_path)
     test_folders = os.listdir(test_input_path)
     all_test_files = []
-    train_feature = np.zeros((1,35))
-    train_label = np.zeros((1,40))
+    train_feature = np.zeros((1,37))
+    train_label = np.zeros((1,38))
     test_case = []
     
     # Collect the valid testing data:
@@ -60,8 +57,8 @@ def trainTestSplit(train_input_path, test_input_path):
         if len(folder) > 10: # filter out the invalid folders
             test_files = os.listdir(test_input_path + folder)
             all_test_files += test_files
-            test_feature = np.zeros((1,35))
-            test_label = np.zeros((1,40))
+            test_feature = np.zeros((1,37))
+            test_label = np.zeros((1,38))
             for test_file in test_files:
                 test_X, test_Y = laodTrainingSample(test_input_path + folder + '/' + test_file)
                 test_feature = np.concatenate((test_feature, test_X), axis=0)
@@ -72,14 +69,14 @@ def trainTestSplit(train_input_path, test_input_path):
     
     # Collect the training data
     print('loading training data')
-    if not os.path.isfile('./../res_data/sample_train_feature_2017.pkl'):
+    if not os.path.isfile('./../res_data/sample_train_feature_2017(ERG).pkl'):
         cnt = 0
         for folder in train_folders:
             if len(folder) >= 10:
                 train_files = os.listdir(train_input_path + folder)
                 np.random.shuffle(train_files)
                 for train_file in train_files:
-                    if cnt > 10000:
+                    if cnt > 30000:
                         break
                     print(cnt)
                     cnt += 1
@@ -94,14 +91,14 @@ def trainTestSplit(train_input_path, test_input_path):
         print('data loading completed')
         new_data = np.concatenate((train_feature, train_label), axis=1)
         np.random.shuffle(new_data)
-        train_feature = new_data[:,:35]
-        train_label = new_data[:,35:]
-        pickle.dump(train_feature, open('./../res_data/sample_train_feature_2017.pkl', 'wb'))
-        pickle.dump(train_label, open('./../res_data/sample_train_label_2017.pkl', 'wb'))
+        train_feature = new_data[:,:37]
+        train_label = new_data[:,37:]
+        pickle.dump(train_feature, open('./../res_data/sample_train_feature_2017(ERG).pkl', 'wb'))
+        pickle.dump(train_label, open('./../res_data/sample_train_label_2017(ERG).pkl', 'wb'))
     else:
-        with open('./../res_data/sample_train_feature_2017.pkl', 'rb') as f:
+        with open('./../res_data/sample_train_feature_2017(ERG).pkl', 'rb') as f:
             train_feature = pickle.load(f)
-        with open('./../res_data/sample_train_label_2017.pkl', 'rb') as f:
+        with open('./../res_data/sample_train_label_2017(ERG).pkl', 'rb') as f:
             train_label = pickle.load(f)
 
     return train_feature, train_label, test_case
@@ -119,7 +116,7 @@ def laodTrainingSample(filepath):
             train_X = train_one_day[:, correct_idx]
             train_Y = train_one_day[:, problem_idx]
         except IndexError:
-            train_X, train_Y = np.zeros((1,35)), np.zeros((1,40))
+            train_X, train_Y = np.zeros((1,37)), np.zeros((1,38))
         return train_X, train_Y
 
 
@@ -143,12 +140,12 @@ def linearModel(train_X, train_Y, test_case):
             sensor_idx = raw_problem_idx[i]
             sensor_name = sensor_dict[sensor_idx]
             # training ......
-            if not os.path.isfile('./../models/linear_models_sample2017/sensor_%d' %i + '.model'):
+            if not os.path.isfile('./../models/linear_models_sample2017(ERG)/sensor_%d' %i + '.model'):
             	reg_ridge.fit(train_X, train_Y[:,i])
            		#model saving ...
-            	pickle.dump(reg_ridge, open('./../models/linear_models_sample2017/sensor_%d' %i + '.model', 'wb'))
+            	pickle.dump(reg_ridge, open('./../models/linear_models_sample2017(ERG)/sensor_%d' %i + '.model', 'wb'))
             else:
-                with open('./../models/linear_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
+                with open('./../models/linear_models_sample2017(ERG)/sensor_%d' %i + '.model', 'rb') as f:
                     reg_ridge = pickle.load(f)
             train_preds = reg_ridge.predict(train_X)
             train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))

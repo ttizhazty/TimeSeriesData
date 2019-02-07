@@ -134,7 +134,7 @@ def plotData(test_case):
             plt.plot(test_label[::30])
             plt.xlabel('Samples')
             plt.ylabel('Value')
-            #plt.title(sensor_name + '(loss=%f)' %loss)
+            plt.title(sensor_name)
             plt.savefig('./../res/raw_data_abnormal/case%d_'%c +'sensor_%d_raw_data.png' %i)
             plt.close() 
         c += 1           
