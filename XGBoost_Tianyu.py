@@ -41,29 +41,43 @@ for idx in raw_problem_idx:
     problem_idx.append(idx - 1) 
 problem_l = len(problem_idx)
 
-def trainTestSplit(train_input_path, test_input_path):
+def trainTestSplit(train_input_path, test_input_path1, test_input_path2):
     train_folders = os.listdir(train_input_path)
-    test_folders = os.listdir(test_input_path)
+    test_folders1 = os.listdir(test_input_path1)
+    test_folders2 = os.listdir(test_input_path2)
     all_test_files = []
     train_feature = np.zeros((1,35))
     train_label = np.zeros((1,40))
-    test_case = []
-    
+    test_case1 = []
+    test_case2 = []
     # Collect the valid testing data:
     print('loading testing data')
-    for folder in test_folders:
+    for folder in test_folders1:
         if len(folder) > 10: # filter out the invalid folders
-            test_files = os.listdir(test_input_path + folder)
+            test_files = os.listdir(test_input_path1 + folder)
             all_test_files += test_files
             test_feature = np.zeros((1,35))
             test_label = np.zeros((1,40))
             for test_file in test_files:
-                test_X, test_Y = laodTrainingSample(test_input_path + folder + '/' + test_file)
+                test_X, test_Y = laodTrainingSample(test_input_path1 + folder + '/' + test_file)
                 test_feature = np.concatenate((test_feature, test_X), axis=0)
                 test_label = np.concatenate((test_label, test_Y), axis=0)
                 # print(test_feature.shape)
                 # print(test_label.shape)
-            test_case.append((test_feature, test_label))   
+            test_case1.append((test_feature, test_label))
+    for folder in test_folders2:
+        if len(folder) > 10: # filter out the invalid folders
+            test_files = os.listdir(test_input_path2 + folder)
+            all_test_files += test_files
+            test_feature = np.zeros((1,35))
+            test_label = np.zeros((1,40))
+            for test_file in test_files:
+                test_X, test_Y = laodTrainingSample(test_input_path2 + folder + '/' + test_file)
+                test_feature = np.concatenate((test_feature, test_X), axis=0)
+                test_label = np.concatenate((test_label, test_Y), axis=0)
+                # print(test_feature.shape)
+                # print(test_label.shape)
+            test_case2.append((test_feature, test_label))
     
     # Collect the training data
     print('loading training data')
@@ -98,7 +112,7 @@ def trainTestSplit(train_input_path, test_input_path):
             train_feature = pickle.load(f)
         with open('./../res_data/sample_train_label_all.pkl', 'rb') as f:
             train_label = pickle.load(f)
-    return train_feature, train_label, test_case
+    return train_feature, train_label, test_case1, test_case2
     
 
 def laodTrainingSample(filepath):
@@ -117,7 +131,7 @@ def laodTrainingSample(filepath):
         return train_X, train_Y
 
 
-def xgbModel(train_X, test_X, test_case):
+def xgbModel(train_X, test_X, test_case1, test_case2):
     print('strat training the linear models ......')
     print('the data size is ......')
     print(train_X.shape)
@@ -158,10 +172,12 @@ def xgbModel(train_X, test_X, test_case):
     # TODO:divided the training set again to check training status.......
     num_rounds = 400
     c = 0
-    for item in test_case:
-        test_X = item[0]
-        test_Y = item[1]
-        print('the testing data size in this case is :', test_X.shape, test_Y.shape)
+    for i in range(len(test_case1)):
+        test_X_1 = test_case1[i][0]
+        test_Y_1 = test_case1[i][1]
+        test_X_2 = test_case2[0][0]
+        test_Y_2 = test_case2[0][1]
+        # print('the testing data size in this case is :', test_X.shape, test_Y.shape)
         for i in range(train_Y.shape[1]):
             sensor_idx = raw_problem_idx[i]
             sensor_name = sensor_dict[sensor_idx]
@@ -179,33 +195,46 @@ def xgbModel(train_X, test_X, test_case):
                 model = xgb.Booster()
                 model.load_model('./../models/xgb_models_sampledata/sensor_%d' %i + '.model')
             
-            xgb_test = xgb.DMatrix(test_X)
+            xgb_test_1 = xgb.DMatrix(test_X_1)
+            xgb_test_2 = xgb.DMatrix(test_X_2)
             
-            preds = model.predict(xgb_test)
-            preds = np.array(preds).reshape(-1)
-            test_label = test_Y[:,i].reshape(-1)
-            loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
-            difference = (preds - test_label) / test_label * 100
-            difference[np.isinf(difference)] = preds[np.isinf(difference)]
-            print('the loss of this model is :', loss)
+            preds_1 = model.predict(xgb_test_1)
+            preds_1 = np.array(preds_1).reshape(-1)
+            test_label_1 = test_Y_1[:,i].reshape(-1)
+            loss_1 = np.sqrt(np.mean(np.subtract(test_label_1, preds_1)**2))
+            difference_1 = (preds_1 - test_label_1) / test_label_1 * 100
+            difference_1[np.isinf(difference_1)] = preds_1[np.isinf(difference_1)]
+
+            preds_2 = model.predict(xgb_test_2)
+            preds_2 = np.array(preds_2).reshape(-1)
+            test_label_2 = test_Y_2[:,i].reshape(-1)
+            preds_2[abs(preds_2-test_label_2) > 20] = test_label_2[abs(preds_2-test_label_2) > 20] * 0.9
+            loss_2 = np.sqrt(np.mean(np.subtract(test_label_2, preds_2)**2))
+            difference_2 = (preds_2 - test_label_2) / test_label_2 * 100
+            difference_2[np.isinf(difference_2)] = preds_2[np.isinf(difference_2)]
+
+            #print('the loss of this model is :', loss)
             print('i am in plot !!!!!!') 
             plt.figure()
-            plt.plot(difference)
+            plt.plot(difference_1)
+            plt.plot(difference_2)
+
             #plt.plot(preds[::1000])
             #plt.plot(test_label[::1000])
             # plt.plot(test_label[::2000]*0.85,'r')
             # plt.plot(test_label[::2000]*1.15, 'r')
-            #plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound'])
+            plt.legend(['abnormal', 'normal'])
             plt.xlabel('Samples')
-            plt.ylabel('Value')
+            plt.ylabel('error_rate')
             plt.ylim((-200,200))
-            plt.title(sensor_name + '(loss=%f)' %loss)
-            plt.savefig('./../res/day_pred/predictions_xgb_sample2017/case%d_'%c +'sensor_%d_xgb.png' %i)
+            plt.title(sensor_name + '(loss=%f)' %loss_1)
+            plt.savefig('./../res/day_pred/xgb_pair/case%d_'%c +'sensor_%d_xgb.png' %i)
             plt.close()
         c += 1
 
 if __name__ == '__main__':
     train_input_path = './../processed_data/'
-    test_input_path = './../processed_data/abnormal_data/'
-    train_X, train_Y, test_case = trainTestSplit(train_input_path, test_input_path)
-    xgbModel(train_X, train_Y, test_case)
+    test_input_path1 = './../processed_data/abnormal_data/'
+    test_input_path2 = './../processed_data/normal_data/'
+    train_X, train_Y, test_case1, test_case2 = trainTestSplit(train_input_path, test_input_path1, test_input_path2)
+    xgbModel(train_X, train_Y, test_case1, test_case2)

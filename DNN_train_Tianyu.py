@@ -72,7 +72,7 @@ def trainTestSplit(train_input_path, test_input_path):
     
     # Collect the training data
     print('loading training data')
-    if not os.path.isfile('./../res_data/sample_train_feature_2017(ERG).pkl'):
+    if not os.path.isfile('./../res_data/sample_train_feature_2017.pkl'):
         cnt = 0
         for folder in train_folders:
             if len(folder) >= 10:
@@ -96,12 +96,12 @@ def trainTestSplit(train_input_path, test_input_path):
         np.random.shuffle(new_data)
         train_feature = new_data[:,:37]
         train_label = new_data[:,37:]
-        pickle.dump(train_feature, open('./../res_data/sample_train_feature_2017(ERG).pkl', 'wb'))
-        pickle.dump(train_label, open('./../res_data/sample_train_label_2017(ERG).pkl', 'wb'))
+        pickle.dump(train_feature, open('./../res_data/sample_train_feature_2017.pkl', 'wb'))
+        pickle.dump(train_label, open('./../res_data/sample_train_label_2017.pkl', 'wb'))
     else:
-        with open('./../res_data/sample_train_feature_2017(ERG).pkl', 'rb') as f:
+        with open('./../res_data/sample_train_feature_2017.pkl', 'rb') as f:
             train_feature = pickle.load(f)
-        with open('./../res_data/sample_train_label_2017(ERG).pkl', 'rb') as f:
+        with open('./../res_data/sample_train_label_2017.pkl', 'rb') as f:
             train_label = pickle.load(f)
 
     return train_feature, train_label, test_case
@@ -123,7 +123,7 @@ def laodTrainingSample(filepath):
         return train_X, train_Y
 
 
-def DNNModel(train_X, train_Y, test_case):
+def DnnModel(train_X, train_Y, test_case):
     print('strat training the linear models ......')
     print('the data size is ......')
     print(train_X.shape)
@@ -136,17 +136,20 @@ def DNNModel(train_X, train_Y, test_case):
         print('the testing data size in this case is :', test_X.shape, test_Y.shape)
 
         for i in range(train_Y.shape[1]):
-            sensor_idx = raw_problem_idx[i]
-            sensor_name = sensor_dict[sensor_idx]
-            # training ......
-            Seq2seqV1 = DNNModel(train_X=train_X, train_Y=train_Y, test_X=test_X, test_Y=test_Y)
-            exit()
+            if i == 8:
+                sensor_idx = raw_problem_idx[i]
+                sensor_name = sensor_dict[sensor_idx]
+                # training ......
+                train_label = train_Y[:,i].reshape(-1,1)
+                test_label = test_Y[:, i].reshape(-1,1)
+                Seq2seqV1 = DNNModel(train_X=train_X, train_Y=train_label, test_X=test_X, test_Y=test_label)
+                exit()
         c += 1
        
 
 
 if __name__ == '__main__':
     train_input_path = './../processed_data/'
-    test_input_path = './../processed_data/normal_data_1/'
+    test_input_path = './../processed_data/abnormal_data_1/'
     train_X, train_Y, test_case = trainTestSplit(train_input_path, test_input_path)
-    linearModel(train_X, train_Y, test_case)
+    DnnModel(train_X, train_Y, test_case)

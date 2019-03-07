@@ -13,6 +13,7 @@ from sklearn.ensemble import RandomForestRegressor
 import xgboost as xgb
 import matplotlib as mpl
 from collections import Counter
+from tqdm import tqdm
 
 if os.environ.get('DISPLAY','')=='':
     print('no display found.')
@@ -43,7 +44,7 @@ for idx in raw_problem_idx:
     problem_idx.append(idx - 1) 
 problem_l = len(problem_idx)
 
-def trainTestSplit(train_input_path, test_input_path):
+def trainTestSplit(train_input_path, test_input_path, test_path):
     train_folders = os.listdir(train_input_path)
     test_folders = os.listdir(test_input_path)
     all_test_files = []
@@ -53,19 +54,43 @@ def trainTestSplit(train_input_path, test_input_path):
     
     # Collect the valid testing data:
     print('loading testing data')
-    for folder in test_folders:
-        if len(folder) > 10: # filter out the invalid folders
+    for folder in tqdm(test_folders):
+        if len(folder) > 17 and folder[:-2] not in test_path: # filter out the invalid folders
             test_files = os.listdir(test_input_path + folder)
             all_test_files += test_files
             test_feature = np.zeros((1,35))
             test_label = np.zeros((1,40))
-            for test_file in test_files:
-                test_X, test_Y = laodTrainingSample(test_input_path + folder + '/' + test_file)
-                test_feature = np.concatenate((test_feature, test_X), axis=0)
-                test_label = np.concatenate((test_label, test_Y), axis=0)
-                # print(test_feature.shape)
-                # print(test_label.shape)
-            test_case.append((test_feature, test_label))   
+            try:
+                for test_file in test_files[:10]:
+                    test_X, test_Y = laodTrainingSample(test_input_path + folder + '/' + test_file)
+                    test_feature = np.concatenate((test_feature, test_X), axis=0)
+                    test_label = np.concatenate((test_label, test_Y), axis=0)
+                    # print(test_feature.shape)
+                    # print(test_label.shape)
+                test_case.append((test_feature, test_label))
+            except IndexError:
+                continue
+            try:
+                for test_file in test_files[10:20]:
+                    test_X, test_Y = laodTrainingSample(test_input_path + folder + '/' + test_file)
+                    test_feature = np.concatenate((test_feature, test_X), axis=0)
+                    test_label = np.concatenate((test_label, test_Y), axis=0)
+                    # print(test_feature.shape)
+                    # print(test_label.shape)
+                test_case.append((test_feature, test_label))
+            except IndexError:
+                continue
+            try:
+                for test_file in test_files[20:30]:
+                    test_X, test_Y = laodTrainingSample(test_input_path + folder + '/' + test_file)
+                    test_feature = np.concatenate((test_feature, test_X), axis=0)
+                    test_label = np.concatenate((test_label, test_Y), axis=0)
+                    # print(test_feature.shape)
+                    # print(test_label.shape)
+                test_case.append((test_feature, test_label))
+            except IndexError:
+                continue
+
     
     # Collect the training data
     print('loading training data')
@@ -76,14 +101,13 @@ def trainTestSplit(train_input_path, test_input_path):
             for train_file in train_files:
                 if cnt > 10:
                     break
-                print(cnt)
                 cnt += 1
                 if train_file not in all_test_files:
                     train_X, train_Y = laodTrainingSample(train_input_path + folder + '/' + train_file)
                     train_feature = np.concatenate((train_feature, train_X), axis=0)
                     train_label = np.concatenate((train_label, train_Y), axis=0)
     print('data loading completed')    
-
+    print('collect positive sample:', len(test_case))
     return train_feature, train_label, test_case
     
 
@@ -121,7 +145,7 @@ def linearModel(train_X, train_Y, test_case):
     svr_model = SVR(gamma='scale', C=1.0, epsilon=0.2)
     num_cnt  = 0
     correct_cnt = 0
-    # c = 0
+    c = 0
     for item in test_case:
         test_X = item[0]
         test_Y = item[1]
@@ -142,39 +166,29 @@ def linearModel(train_X, train_Y, test_case):
             preds = reg_ridge.predict(test_X)
             preds = np.array(preds).reshape(-1).astype(float)[::10]
             test_label = test_Y[:,i].reshape(-1).astype(float)[::10]
-            # preds[abs(preds-test_label) > 20] = test_label[abs(preds-test_label) > 20] * 0.9
+            preds[abs(preds-test_label) > 20] = test_label[abs(preds-test_label) > 20] * 0.9
             loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
             difference = (preds - test_label) / test_label * 100
             difference[np.isinf(difference)] = 0
             difference[np.isnan(difference)] = 0
-            collector.append(resultAnalysis(difference, i))
-        collector = Counter(collector)
-        try:
-            error = collector[False]
-            if error >= 1:
-                num_cnt += 1
-            else:
-                correct_cnt += 1
-                num_cnt += 1
-        except KeyError:
-            correct_cnt += 1
-            num_cnt += 1
-            # print('the loss of this model is :', loss)
-            # print('i am in plot !!!!!!') 
-            # plt.figure()
-            # plt.plot(difference)
-            # #plt.plot(preds[::1000])
-            # #plt.plot(test_label[::1000])
-            # # plt.plot(test_label[::2000]*0.85,'r')
-            # # plt.plot(test_label[::2000]*1.15, 'r')
-            # #plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound'])
-            # plt.xlabel('Samples')
-            # plt.ylabel('Value')
-            # plt.ylim((-200,200))
-            # plt.title(sensor_name + '(loss=%f)' %loss)
-            # plt.savefig('./../res/day_pred_testing/predictions_val_sample2017/case%d_'%c +'sensor_%d_linear.png' %i)
-            # plt.close()
-        # c += 1
+            
+            print('the loss of this model is :', loss)
+            print('i am in plot !!!!!!') 
+            plt.figure()
+            plt.plot(difference)
+            plt.axis('off')
+            #plt.plot(preds[::1000])
+            #plt.plot(test_label[::1000])
+            # plt.plot(test_label[::2000]*0.85,'r')
+            # plt.plot(test_label[::2000]*1.15, 'r')
+            #plt.legend(['prediciton', 'label', 'lower_bound', 'upper_bound'])
+            #plt.xlabel('Samples')
+            #plt.ylabel('Value')
+            plt.ylim((-200,200))
+            #plt.title(sensor_name + '(loss=%f)' %loss)
+            plt.savefig('./../res/meta_learning/normal/case%d_'%c +'sensor_%d_linear.png' %i)
+            plt.close()
+        c += 1
         '''
         for j in range(val_Y.shape[1]):
             sensor_idx = raw_problem_idx[j]
@@ -201,6 +215,8 @@ def linearModel(train_X, train_Y, test_case):
 
 if __name__ == '__main__':
     train_input_path = './../processed_data/'
-    test_input_path = './../processed_data/abnormal_data/'
-    train_X, train_Y, test_case = trainTestSplit(train_input_path, test_input_path)
+    test_input_path = './../processed_data/'
+    test_path = os.listdir('./../processed_data/abnormal_data/')
+    print(test_path)
+    train_X, train_Y, test_case = trainTestSplit(train_input_path, test_input_path, test_path)
     linearModel(train_X, train_Y, test_case)

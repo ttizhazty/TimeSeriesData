@@ -44,66 +44,79 @@ for idx in raw_problem_idx:
 problem_l = len(problem_idx)
 
 
-def trainTestSplit(train_input_path, test_input_path):
+def trainTestSplit(train_input_path, test_input_path1, test_input_path2):
     train_folders = os.listdir(train_input_path)
-    test_folders = os.listdir(test_input_path)
+    test_folders1 = os.listdir(test_input_path1)
+    test_folders2 = os.listdir(test_input_path2)
     all_test_files = []
     train_feature = np.zeros((1,35))
     train_label = np.zeros((1,40))
-    test_case = []
-    
+    test_case1 = []
+    test_case2 = []
     # Collect the valid testing data:
     print('loading testing data')
-    for folder in test_folders:
+    for folder in test_folders1:
         if len(folder) > 10: # filter out the invalid folders
-            test_files = os.listdir(test_input_path + folder)
+            test_files = os.listdir(test_input_path1 + folder)
             all_test_files += test_files
             test_feature = np.zeros((1,35))
             test_label = np.zeros((1,40))
             for test_file in test_files:
-                test_X, test_Y = laodTrainingSample(test_input_path + folder + '/' + test_file)
+                test_X, test_Y = laodTrainingSample(test_input_path1 + folder + '/' + test_file)
                 test_feature = np.concatenate((test_feature, test_X), axis=0)
                 test_label = np.concatenate((test_label, test_Y), axis=0)
                 # print(test_feature.shape)
                 # print(test_label.shape)
-            test_case.append((test_feature, test_label, test_file))   
+            test_case1.append((test_feature, test_label))
+    for folder in test_folders2:
+        if len(folder) > 10: # filter out the invalid folders
+            test_files = os.listdir(test_input_path2 + folder)
+            all_test_files += test_files
+            test_feature = np.zeros((1,35))
+            test_label = np.zeros((1,40))
+            for test_file in test_files:
+                test_X, test_Y = laodTrainingSample(test_input_path2 + folder + '/' + test_file)
+                test_feature = np.concatenate((test_feature, test_X), axis=0)
+                test_label = np.concatenate((test_label, test_Y), axis=0)
+                # print(test_feature.shape)
+                # print(test_label.shape)
+            test_case2.append((test_feature, test_label))
     
     # Collect the training data
     print('loading training data')
-    if not os.path.isfile('./../res_data/sample_train_feature_2017.pkl'):
+    if not os.path.isfile('./../res_data/sample_train_feature_all.pkl'):
         cnt = 0
         for folder in train_folders:
             if len(folder) >= 10:
                 train_files = os.listdir(train_input_path + folder)
                 np.random.shuffle(train_files)
                 for train_file in train_files:
-                    if cnt > 10000:
+                    if cnt > 100000:
                         break
                     print(cnt)
                     cnt += 1
-                    if train_file not in all_test_files:
+                    if train_file not in all_test_files: #and train_file[7:11] == '2017':
+                        print(train_file)
                         train_X, train_Y = laodTrainingSample(train_input_path + folder + '/' + train_file)
                         # Sampling
                         sample_step = 30
                         train_X, train_Y = train_X[::sample_step,:], train_Y[::sample_step,:]
-                        # print(train_X.shape, train_Y.shape)
                         train_feature = np.concatenate((train_feature, train_X), axis=0)
                         train_label = np.concatenate((train_label, train_Y), axis=0)
-        print('data loading completed')
+        print('data loading completed')    
         new_data = np.concatenate((train_feature, train_label), axis=1)
         np.random.shuffle(new_data)
         train_feature = new_data[:,:35]
         train_label = new_data[:,35:]
-        pickle.dump(train_feature, open('./../res_data/sample_train_feature_2017.pkl', 'wb'))
-        pickle.dump(train_label, open('./../res_data/sample_train_label_2017.pkl', 'wb'))
+        pickle.dump(train_feature, open('./../res_data/sample_train_feature_all.pkl', 'wb'))
+        pickle.dump(train_label, open('./../res_data/sample_train_label_all.pkl', 'wb'))
     else:
-        with open('./../res_data/sample_train_feature_2017.pkl', 'rb') as f:
+        with open('./../res_data/sample_train_feature_all.pkl', 'rb') as f:
             train_feature = pickle.load(f)
-        with open('./../res_data/sample_train_label_2017.pkl', 'rb') as f:
+        with open('./../res_data/sample_train_label_all.pkl', 'rb') as f:
             train_label = pickle.load(f)
-
-    return train_feature, train_label, test_case
-    
+    return train_feature, train_label, test_case1, test_case2
+     
 
 def laodTrainingSample(filepath):
     with open(filepath, 'rb') as f:
@@ -121,25 +134,27 @@ def laodTrainingSample(filepath):
         return train_X, train_Y
 
 
-def esembleModels(train_X, train_Y, test_case):
+def esembleModels(train_X, train_Y, test_case1, test_case2):
     print('strat tstacking the models ......')
     print('the data size is ......')
     print(train_X.shape)
     print(train_Y.shape)
     reg_ridge = linear_model.Ridge(alpha = 3)
     c = 0
-    for item in test_case:
-        test_X = item[0]
-        test_Y = item[1]
-        test_files = item[2]
-        print('the testing data size in this case is :', test_X.shape, test_Y.shape)
-        first_layer_preds = np.zeros((test_Y.shape[0], 4))
+    for i in range(len(test_case1)):
+        test_X_1 = test_case1[i][0]
+        test_Y_1 = test_case1[i][1]
+        test_X_2 = test_case2[0][0]
+        test_Y_2 = test_case2[0][1]
+        # print('the testing data size in this case is :', test_X.shape, test_Y.shape)
+        first_layer_preds_1 = np.zeros((test_Y_1.shape[0], 4))
+        first_layer_preds_2 = np.zeros((test_Y_2.shape[0], 4))
         first_layer_preds_train = np.zeros((train_Y.shape[0], 4))
         for i in range(train_Y.shape[1]):
             sensor_idx = raw_problem_idx[i]
             sensor_name = sensor_dict[sensor_idx]
-            test_label = test_Y[:,i].reshape(-1)
-
+            test_label_1 = test_Y_1[:,i].reshape(-1)
+            test_label_2 = test_Y_2[:,i].reshape(-1)
             # ridge regression 
             print('loading ridge regression ......')
             with open('./../models/linear_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
@@ -147,57 +162,93 @@ def esembleModels(train_X, train_Y, test_case):
                 model = pickle.load(f)
             train_preds = model.predict(train_X)
             train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))
-            preds = model.predict(test_X)
-            preds = np.array(preds).reshape(-1)
-            loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
-            print('training loss of this model is ', train_loss)
-            print('testing loss of this model is: ', loss)
+            preds_1 = model.predict(test_X_1)
+            preds_1 = np.array(preds_1).reshape(-1)
+            #loss_1 = np.sqrt(np.mean(np.subtract(test_label_1, preds_1)**2))
+            #print('training loss of this model is ', train_loss)
+            #print('testing loss of this model is: ', loss)
             first_layer_preds_train[:,0] = train_preds
-            first_layer_preds[:,0] = preds 
+            first_layer_preds_1[:,0] = preds_1 
+
+            preds_2 = model.predict(test_X_2)
+            preds_2 = np.array(preds_2).reshape(-1)
+            loss_2 = np.sqrt(np.mean(np.subtract(test_label_2, preds_2)**2))
+            #print('training loss of this model is ', train_loss)
+            #print('testing loss of this model is: ', loss)
+            #first_layer_preds_train[:,0] = train_preds
+            first_layer_preds_2[:,0] = preds_2
 
             print('loading xgb regression ......')
             xgb_train = xgb.DMatrix(train_X)
-            xgb_test = xgb.DMatrix(test_X)
+            xgb_test_1 = xgb.DMatrix(test_X_1)
+            xgb_test_2 = xgb.DMatrix(test_X_2)
             model = xgb.Booster()
             model.load_model('./../models/xgb_models_sampledata/sensor_%d' %i + '.model')
             train_preds = model.predict(xgb_train)
             train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))
-            preds = model.predict(xgb_test)
-            preds = np.array(preds).reshape(-1)
-            loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
-            print('training loss of this model is ', train_loss)
-            print('testing loss of this model is: ', loss)
-            first_layer_preds_train[:,0] = train_preds
-            first_layer_preds[:,1] = preds 
+            preds_1 = model.predict(xgb_test_1)
+            preds_1 = np.array(preds_1).reshape(-1)
+            #loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
+            #print('training loss of this model is ', train_loss)
+            #print('testing loss of this model is: ', loss)
+            first_layer_preds_train[:,1] = train_preds
+            first_layer_preds_1[:,1] = preds_1 
+
+            preds_2 = model.predict(xgb_test_2)
+            preds_2 = np.array(preds_2).reshape(-1)
+
+            #loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
+            #print('training loss of this model is ', train_loss)
+            #print('testing loss of this model is: ', loss)
+            #first_layer_preds_train[:,0] = train_preds
+            first_layer_preds_2[:,1] = preds_2 
 
             print('loading poly regression ......')
             with open('./../models/poly_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
                 model = pickle.load(f)
             ploy = PolynomialFeatures(degree = 2)
             train_X_poly = ploy.fit_transform(train_X)
-            test_X_poly = ploy.fit_transform(test_X)
+            test_X_poly_1 = ploy.fit_transform(test_X_1)
+            test_X_poly_2 = ploy.fit_transform(test_X_2)
             train_preds = model.predict(train_X_poly)
             train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))
-            preds = model.predict(test_X_poly)
-            preds = np.array(preds).reshape(-1)
-            loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
-            print('training loss of this model is ', train_loss)
-            print('testing loss of this model is: ', loss)
-            first_layer_preds_train[:,0] = train_preds
-            first_layer_preds[:,2] = preds 
+            preds_1 = model.predict(test_X_poly_1)
+            preds_1 = np.array(preds_1).reshape(-1)
+            #loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
+            #print('training loss of this model is ', train_loss)
+            #print('testing loss of this model is: ', loss)
+            first_layer_preds_train[:,2] = train_preds
+            first_layer_preds_1[:,2] = preds_1
+
+            preds_2 = model.predict(test_X_poly_2)
+            preds_2 = np.array(preds_2).reshape(-1)
+            #loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
+            #print('training loss of this model is ', train_loss)
+            #print('testing loss of this model is: ', loss)
+            #first_layer_preds_train[:,0] = train_preds
+            first_layer_preds_2[:,2] = preds_2
 
             print('loading randomforest regression ......')
             with open('./../models/rf_models_sample2017/sensor_%d' %i + '.model', 'rb') as f:
                 model = pickle.load(f)
             train_preds = model.predict(train_X)
             train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))
-            preds = model.predict(test_X)
-            preds = np.array(preds).reshape(-1)
-            loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
-            print('training loss of this model is ', train_loss)
-            print('testing loss of this model is: ', loss)
-            first_layer_preds_train[:,0] = train_preds
-            first_layer_preds[:,3] = preds
+            preds_1 = model.predict(test_X_1)
+            preds_1 = np.array(preds_1).reshape(-1)
+            #loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
+            #print('training loss of this model is ', train_loss)
+            #print('testing loss of this model is: ', loss)
+            first_layer_preds_train[:,3] = train_preds
+            first_layer_preds_1[:,3] = preds_1
+
+            preds_2 = model.predict(test_X_2)
+            preds_2 = np.array(preds_2).reshape(-1)
+            #loss = np.sqrt(np.mean(np.subtract(test_label, preds)**2))
+            #print('training loss of this model is ', train_loss)
+            #print('testing loss of this model is: ', loss)
+            #first_layer_preds_train[:,0] = train_preds
+            first_layer_preds_2[:,3] = preds_2
+
 
             # train a ensemble model ... 
             if not os.path.isfile('./../models/esemble_models/sensor_%d' %i + '.model'):
@@ -210,26 +261,33 @@ def esembleModels(train_X, train_Y, test_case):
             # can use corss validation .....
             train_preds = reg_ridge.predict(first_layer_preds_train)
             train_loss = np.sqrt(np.mean(np.subtract(train_Y[:,i].reshape(-1), train_preds)**2))
-            preds = reg_ridge.predict(first_layer_preds)
-            difference = (preds - test_label) / test_label * 100
-            difference[np.isinf(difference)] = 0
-            difference[np.isnan(difference)] = 0
+            preds_1 = reg_ridge.predict(first_layer_preds_1)
+            preds_2 = reg_ridge.predict(first_layer_preds_2)
+            preds_2[abs(preds_2-test_label_2) > 20] = test_label_2[abs(preds_2-test_label_2) > 20] * 0.9
+            difference_1 = (preds_1 - test_label_1) / test_label_1 * 100
+            difference_1[np.isinf(difference_1)] = 0
+            difference_1[np.isnan(difference_1)] = 0
+            difference_2 = (preds_2 - test_label_2) / test_label_2 * 100
+            difference_2[np.isinf(difference_2)] = 0
+            difference_2[np.isnan(difference_2)] = 0
             print(sensor_name)
-            print('the train loss of this model is:', train_loss)
-            print('the loss of this model is :', loss)
+            #print('the train loss of this model is:', train_loss)
+            #print('the loss of this model is :', loss)
             print('i am in plot !!!!!!') 
             plt.figure()
-            plt.plot(difference)
+            plt.plot(difference_1)
+            plt.plot(difference_2)
             plt.xlabel('Samples')
-            plt.ylabel('Value')
+            plt.ylabel('Error_rate')
             plt.ylim((-200, 200))
-            plt.title(sensor_name + '(loss=%f)' %loss)
-            plt.savefig('./../res/day_pred_longtime/predictions_val_esemble_sample2017/case%d_'%c +'sensor_%d_rf.png' %i)
+            plt.title(sensor_name + '(loss=%f)' %train_loss)
+            plt.savefig('./../res/day_pred/esemble_pair/case%d_'%c +'sensor_%d_rf.png' %i)
             plt.close()
         c += 1
 
 if __name__ == '__main__':
     train_input_path = './../processed_data/'
-    test_input_path = './../processed_data/normal_data/'
-    train_X, train_Y, test_case = trainTestSplit(train_input_path, test_input_path)
-    esembleModels(train_X, train_Y, test_case)
+    test_input_path1 = './../processed_data/abnormal_data/'
+    test_input_path2 = './../processed_data/normal_data/'
+    train_X, train_Y, test_case1, test_case2 = trainTestSplit(train_input_path, test_input_path1, test_input_path2)
+    esembleModels(train_X, train_Y, test_case1, test_case2)

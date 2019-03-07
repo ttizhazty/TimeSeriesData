@@ -133,7 +133,7 @@ def linearModel(train_X, train_Y, test_case):
     reg_lasso = linear_model.Lasso()
     reg_ridge = linear_model.Ridge(alpha = 3)
     svr_model = SVR(gamma='scale', C=1.0, epsilon=0.2)
-    mlp_model = MLPRegressor(hidden_layer_sizes=(35,64,128,64,32,1), activation='tanh', solver='lbfgs', random_state=1, max_iter=200, learning_rate_init=0.001)
+    mlp_model = MLPRegressor(hidden_layer_sizes=(35,128,256,512,1), activation='tanh', solver='lbfgs', random_state=1, max_iter=200, learning_rate_init=0.001)
     c = 0
     for item in test_case:
         test_X = item[0]
